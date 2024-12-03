@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <!--This is an xml comment. Comments have no impact on compiling.-->
+
+    <PropertyGroup>
+        <!--This needs to be changed for the mod to compile.-->
+        <TheLongDarkPath>E:\SteamLibrary\steamapps\common\TheLongDark</TheLongDarkPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <!--This is the .NET version the mod will be compiled with. Don't change it.-->
+        <TargetFramework>net6.0</TargetFramework>
+
+        <!--This tells the compiler to use the latest C# version.-->
+        <LangVersion>Latest</LangVersion>
+
+        <!--This adds global usings for a few common System namespaces.-->
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!--This enables nullable annotation and analysis. It's good coding form.-->
+        <Nullable>enable</Nullable>
+
+        <!--This tells the compiler to use assembly attributes instead of generating its own.-->
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+        <!--PDB files are mostly useless for modding since they can't be loaded.-->
+        <DebugType>none</DebugType>
+    </PropertyGroup>
+
+    <!--This tells the compiler where to look for assemblies. Don't change it.-->
+    <PropertyGroup>
+        <MelonLoaderPath>$(TheLongDarkPath)/MelonLoader/net6</MelonLoaderPath>
+        <ManagedPath>$(TheLongDarkPath)/MelonLoader/Managed</ManagedPath>
+        <Il2CppPath>$(TheLongDarkPath)/MelonLoader/Il2CppAssemblies</Il2CppPath>
+        <ModsPath>$(TheLongDarkPath)/Mods</ModsPath>
+        <AssemblySearchPaths>$(AssemblySearchPaths);$(MelonLoaderPath);$(ManagedPath);$(Il2CppPath);$(ModsPath);</AssemblySearchPaths>
+    </PropertyGroup>
+
+    <!--This tells the compiler to not include referenced assemblies in the output folder.-->
+    <ItemDefinitionGroup>
+        <Reference>
+            <Private>False</Private>
+            <SpecificVersion>False</SpecificVersion>
+        </Reference>
+    </ItemDefinitionGroup>
+
+    <ItemGroup>
+      <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.33.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="ModSettings">
+        <HintPath>C:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModSettings.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+	
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="xcopy /y /d  &quot;$(TargetPath)&quot; &quot;$(TheLongDarkPath)\Mods&quot;" />
+    </Target>
+</Project>
