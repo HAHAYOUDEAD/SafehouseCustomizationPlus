@@ -1,0 +1,38 @@
+﻿{
+  "SCP_Action_CantPickupHot": {
+
+    "English": "Cannot pickup while still burning",
+    "Russian": ""
+  },
+  "SCP_Action_CantDestroyHot": {
+
+    "English": "Cannot destroy while still burning",
+    "Russian": ""
+  },
+  "SCP_Action_CantMoveHot": {
+
+    "English": "Cannot move while still burning",
+    "Russian": ""
+  },
+  "SCP_Action_CantMoveHeavy": {
+
+    "English": "Too heavy to move",
+    "Russian": ""
+  },
+  "SCP_Action_IsPartOfStaticBatch": {
+
+    "English": "This object cannot be moved",
+    "Russian": ""
+  },
+  "SCP_Action_NoValidObject": {
+
+    "English": "No valid object in sight",
+    "Russian": ""
+  },
+  "SCP_Action_AttemptToMakeMovable": {
+
+    "English": "Attempting to make movable: ",
+    "Russian": ""
+  }
+
+}

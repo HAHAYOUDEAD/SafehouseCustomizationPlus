@@ -3,6 +3,6 @@
 
 [assembly: AssemblyVersion(modVersion)]
 [assembly: AssemblyFileVersion(modVersion)]
-[assembly: MelonInfo(typeof(BCP.BCPMain), modName, modVersion, modAuthor)]
+[assembly: MelonInfo(typeof(SCPlus.SCPMain), modName, modVersion, modAuthor)]
 
 [assembly: MelonGame("Hinterland", "TheLongDark")]
