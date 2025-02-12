@@ -1,7 +1,4 @@
-﻿using Il2CppTLD.AddressableAssets;
-using ModSettings;
-using UnityEngine.AddressableAssets;
-using UnityEngine.Playables;
+﻿using ModSettings;
 
 namespace SCPlus
 {
@@ -33,24 +30,33 @@ namespace SCPlus
         public bool pickupAnything = false;
         */
         [Name("Hide house icon")]
-        [Description("...")]
+        [Description("Hide safehouse customization icon\n\nDefault: Only hide when not customizing")]
         [Choice(new string[]
         {
             "Vanilla",
             "Only hide when not customizing",
             "Always hide"
         })]
-        public int hideIcon;
+        public int hideIcon = 1;
 
         [Name("Alternate workbench interaction")]
-        [Description("Interact with workbenches like before. RMB to break down")]
-        public bool altWorkbenchInteraction = false;
+        [Description("Interact with workbenches like before. RMB to break down\n\nDefault: true")]
+        public bool altWorkbenchInteraction = true;
+
+        [Name("Weight approximation")]
+        [Description("Simple attempt to calculate decoration weight from its material and model volume. Can produce funny results\n\nDefault: true")]
+        public bool doWeightCalculation = true;
+
+        [Name("Weight multiplier")]
+        [Description("Adjust weight approximation to your liking\n\nDefault: 1")]
+        [Slider(0.1f, 2f, 20)]
+        public float autoWeightMultiplier = 1f;
 
         [Section("Dev")]
         [Name("Enable developer inspect mode")]
         [Description("Sprint + RMB on any item to inpect, arrows to adjust position, +/- to zoom, 0 to take screenshot with object name")]
         public bool devInspect = false;
-        
+
         [Name("Debug")]
         [Description("Send debug info to console")]
         public bool debugLog = false;

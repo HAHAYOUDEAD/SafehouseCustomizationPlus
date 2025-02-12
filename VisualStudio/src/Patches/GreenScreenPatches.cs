@@ -7,43 +7,47 @@
         {
             internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace)
             {
+                if (!Settings.options.devInspect || !InputManager.GetSprintDown(InputManager.m_CurrentContext)) return true;
+
                 DecorationItem di = objectToPlace.GetComponent<DecorationItem>();
 
-                if (di)
+                if (di) // setting up greenscreen
                 {
-                    if (Settings.options.devInspect && InputManager.GetSprintDown(InputManager.m_CurrentContext)) // setting up greenscreen
+                    GearItem gi = GearItem.Instantiate(GearItem.LoadGearItemPrefab("GEAR_Stone"));
+                    foreach (Renderer r in gi.m_MeshRenderers)
                     {
-                        GearItem gi = GearItem.Instantiate(GearItem.LoadGearItemPrefab("GEAR_Stone"));
-                        foreach (Renderer r in gi.m_MeshRenderers)
-                        {
-                            r.enabled = false;
-                        }
-                        SCPMain.DEVInspectTempGO = GameObject.Instantiate(di.gameObject);
-
-                        SCPMain.DEVInspectTempGO.transform.localScale = Vector3.one * 0.1f;
-
-                        GameManager.GetPlayerManagerComponent().EnterInspectGearMode(gi);
-                        SCPMain.DEVInspectTempGO.transform.SetParent(gi.transform);
-                        Collider bc = SCPMain.DEVInspectTempGO.GetComponent<Collider>();
-                        SCPMain.DEVInspectTempGO.transform.position = Vector3.zero;
-                        SCPMain.DEVInspectTempGO.transform.localPosition = Vector3.zero;
-                        if (bc) SCPMain.DEVInspectTempGO.transform.localPosition += Vector3.down * bc.bounds.extents.y / 2f;
-                        SCPMain.DEVInspectTempGO.transform.localRotation = Quaternion.identity;
-                        foreach (Transform t in SCPMain.DEVInspectTempGO.GetComponentsInChildren<Transform>())
-                        {
-                            t.gameObject.layer = vp_Layer.InspectGear;
-                        }
-
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_InspectPrompts.active = false;
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_StatDetails.gameObject.active = false;
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_Description.gameObject.active = false;
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_Title.gameObject.active = false;
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectModeItemTypeIcons[0].transform.GetParent().gameObject.active = false;
-                        InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_InventoryStatusSprite.gameObject.active = false;
-
-                        SCPMain.DEVInspectMode = true;
-                        return false;
+                        r.enabled = false;
                     }
+                    SCPMain.DEVInspectTempGO = GameObject.Instantiate(di.gameObject);
+
+                    SCPMain.DEVInspectTempGO.transform.localScale = Vector3.one * 0.1f;
+
+                    GameManager.GetPlayerManagerComponent().EnterInspectGearMode(gi);
+                    SCPMain.DEVInspectTempGO.transform.SetParent(gi.transform);
+                    Collider bc = SCPMain.DEVInspectTempGO.GetComponent<Collider>();
+                    SCPMain.DEVInspectTempGO.transform.position = Vector3.zero;
+                    SCPMain.DEVInspectTempGO.transform.localPosition = Vector3.zero;
+                    if (bc) SCPMain.DEVInspectTempGO.transform.localPosition += Vector3.down * bc.bounds.extents.y / 2f;
+                    SCPMain.DEVInspectTempGO.transform.localRotation = Quaternion.identity;
+                    foreach (Transform t in SCPMain.DEVInspectTempGO.GetComponentsInChildren<Transform>())
+                    {
+                        t.gameObject.layer = vp_Layer.InspectGear;
+                    }
+
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_InspectPrompts.active = false;
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_StatDetails.gameObject.active = false;
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_Description.gameObject.active = false;
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_Title.gameObject.active = false;
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectModeItemTypeIcons[0].transform.GetParent().gameObject.active = false;
+                    InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_InventoryStatusSprite.gameObject.active = false;
+
+                    if (SCPMain.catalogParsed.ContainsKey(SanitizeObjectName(objectToPlace.name)) || (di.IconReference.RuntimeKeyIsValid() && di.IconReference.RuntimeKey.ToString() != SCPMain.catalogParsed[placeholderIconName]))
+                    {
+                        HUDMessage.AddMessage($"{SanitizeObjectName(objectToPlace.name)} already has an icon!", false, true);
+                    }
+
+                    SCPMain.DEVInspectMode = true;
+                    return false;
                 }
                 return true;
             }
@@ -52,10 +56,10 @@
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ExitInspectGearMode))] // restore after greenscreen
         private static class StopDevInspect
         {
-            internal static void Postfix(ref PlayerManager __instance)
+            internal static void Prefix(ref PlayerManager __instance)
             {
                 if (!Settings.options.devInspect) return;
-                if (!__instance.m_InspectModeActive)
+                if (!__instance.m_InspectModeActive || !SCPMain.DEVInspectMode)
                 {
                     return;
                 }

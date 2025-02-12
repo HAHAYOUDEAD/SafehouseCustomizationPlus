@@ -2,37 +2,73 @@
   "SCP_Action_CantPickupHot": {
 
     "English": "Cannot pickup while still burning",
-    "Russian": ""
+    "Russian": "Слишком горячо чтобы поднять"
   },
   "SCP_Action_CantDestroyHot": {
 
     "English": "Cannot destroy while still burning",
-    "Russian": ""
+    "Russian": "Слишком горячо чтобы разломать"
   },
   "SCP_Action_CantMoveHot": {
 
     "English": "Cannot move while still burning",
-    "Russian": ""
+    "Russian": "Слишком горячо чтобы сдвинуть"
   },
   "SCP_Action_CantMoveHeavy": {
 
     "English": "Too heavy to move",
-    "Russian": ""
+    "Russian": "Слишком тяжело чтобы сдвинуть"
   },
   "SCP_Action_IsPartOfStaticBatch": {
 
     "English": "This object cannot be moved",
-    "Russian": ""
+    "Russian": "Этот объект нельзя сдвинуть"
   },
   "SCP_Action_NoValidObject": {
 
     "English": "No valid object in sight",
-    "Russian": ""
+    "Russian": "Нет подходящего объекта в поле зрения"
   },
   "SCP_Action_AttemptToMakeMovable": {
 
     "English": "Attempting to make movable: ",
-    "Russian": ""
-  }
+    "Russian": "Пытаемся сдвинуть: "
+  },
+  "SCP_Action_CantStoreCarryableInCarryable": {
 
+    "English": "This item cannot be stored in this container",
+    "Russian": "Этот объект нельзя хранить в этом контейнере"
+  },
+
+
+
+
+  "SCP_Label_Decoration": {
+
+    "English": "SC+ Decoration"
+  },
+  "SCP_Label_Carryable": {
+
+    "English": "SC+ Carryable"
+  },
+
+
+
+
+
+
+
+
+  "SCP_Deco_TraderRadio": {
+
+    "English": "Shortwave Radio"
+  },
+  "SCP_Deco_FlareGunCase": {
+
+    "English": "Emergency Kit"
+  },
+  "SCP_Deco_AmmoWorkbench": {
+
+    "English": "Ammunition Workbench"
+  }
 }

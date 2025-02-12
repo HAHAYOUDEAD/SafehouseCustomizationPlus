@@ -1,12 +1,5 @@
-﻿global using static SCPlus.Utility;
-using Il2Cpp;
-using Il2CppTLD.AddressableAssets;
-using Il2CppTLD.IntBackedUnit;
-using Il2CppTLD.Trader;
-using Il2CppVLB;
-using Unity.VisualScripting;
-using Unity.VisualScripting.Antlr3.Runtime.Tree;
-using UnityEngine.AddressableAssets;
+﻿using UnityEngine.AddressableAssets.ResourceLocators;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace SCPlus
 {
@@ -20,29 +13,64 @@ namespace SCPlus
         public static float DEVInspectModeMoveStep = 0.01f;
         public static GameObject DEVInspectTempGO;
 
-        public static Dictionary<string, string> fireBarrelData = new (); // WoodStove guid | serialized fire
-        public static Dictionary<string, float> objectWeightOverride = new (); // object name | weight
+        public static IResourceLocator catalogLocator;
+        public static Dictionary<string, string> catalogParsed = new();
+        public static HashSet<string> iconGuidLookupList = new();
+        
+        public static Dictionary<string, float> autoWeightTable = new(); // object name | weight
 
+        public static bool instantiatingCarryables;
         public static bool justDupedContainer;
 
         public override void OnInitializeMelon()
         {
             modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
             LocalizationManager.LoadJsonLocalization(LoadEmbeddedJSON("Localization.json"));
+
             Settings.OnLoad();
+
+            AsyncOperationHandle<IResourceLocator> handle = null;
+            try
+            {
+                string path = modsPath + iconsFolder + iconsCatalog + ".json";
+                handle = Addressables.LoadContentCatalogAsync(path);
+                catalogLocator = handle.WaitForCompletion();
+                if (catalogLocator != null && catalogLocator.Keys != null)
+                {
+                    for (int i = 0; i < catalogLocator.Keys.ToList().Count; i++)
+                    {
+                        string thisString = catalogLocator.Keys.ElementAt(i).ToString();
+                        if (Guid.TryParse(thisString, out _))
+                        {
+                            string prevString = catalogLocator.Keys.ElementAt(i - 1).ToString().Replace("ico__", "");
+                            catalogParsed[prevString] = thisString;
+                            iconGuidLookupList.Add(thisString);
+                        }
+                    }
+                }
+                else
+                {
+                    Log(CC.Red, $"Catalog {iconsCatalog} could not be found at {path}");
+                }
+            }
+            catch (Exception e)
+            {
+                Log(CC.Red, $"Catalog {iconsCatalog} load failed: " + e.ToString());
+            }
+
+            //handle.Release();
             MelonCoroutines.Start(ConsoleCommands.CONSOLE_PopulateDecortionsListEnum());
-            //Il2CppTLD.AddressableAssets.AssetHelper.SafeLoadAssetAsync<GameObject>("Assets/ArtAssets/Env/Objects/OBJ_IndustrialDeco/OBJ_PlasticBarrelA_Prefab.prefab").WaitForCompletion().GetOrAddComponent<ObjectGuid>().MaybeRuntimeRegister();
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             if (IsScenePlayable()) isLoaded = true;
-            DecorativePatches.injectPdids = false;
+            DecorationPatches.injectPdids = false;
         }
-        
+
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
-            DecorativePatches.injectPdids = true;
+            DecorationPatches.injectPdids = true;
         }
 
         public static void SetupGreenscreen(Camera cam, bool reset = false)
@@ -67,17 +95,22 @@ namespace SCPlus
             string sanitizedName = "";
             if (di)
             {
-                sanitizedName = di.name.Replace("(PLACED)", "").Replace("(Clone)", "").Replace(" ", "");
+                sanitizedName = SanitizeObjectName(di.name);
             }
-            string path = Directory.CreateDirectory(modsPath + "/SCPlus/Screenshots").FullName;
+            string path = Directory.CreateDirectory(modsPath + "/SCPlus/Screenshots/").FullName;
             if (sanitizedName == "")
             {
                 sanitizedName = Il2Cpp.Utils.GetGuid();
             }
-            path += "/" + sanitizedName;
+            if (SCPMain.catalogParsed.ContainsKey(sanitizedName) || (di.IconReference.RuntimeKeyIsValid() && di.IconReference.RuntimeKey.ToString() != catalogParsed[placeholderIconName]))
+            {
+                path += "!";
+                s = "Duplicate screenshot for " + sanitizedName;
+            }
+
+            path += sanitizedName;
             path += ".png";
 
-            ScreenCapture.CaptureScreenshot(path);
             if (File.Exists(path))
             {
                 s = "Overwritten screenshot for " + sanitizedName;
@@ -86,60 +119,235 @@ namespace SCPlus
             {
                 s = "Took screenshot for " + sanitizedName;
             }
-            
+
+            ScreenCapture.CaptureScreenshot(path);
+
             MelonCoroutines.Start(DelayedHUDMessage(s, 0.5f));
             return path;
         }
 
-        public static IEnumerator DelayedHUDMessage(string text, float delay)
-        {
-            float n = 0f;
-
-            while (n <= delay)
-            { 
-                n += Time.deltaTime;
-                yield return new WaitForEndOfFrame();
-            }
-            HUDMessage.AddMessage(text, false, true);
-            yield break;
-        }
-
-        public static void SetupDecorationItem(DecorationItem di)
+        public static void RelevantSetupForDecorationItem(DecorationItem di, bool weightOnly = false) // icons and weight
         {
             if (!di) return;
-            /* somewhat handled by HL
-            float weight;
-            float baseWeight = 2f;
-            switch (di.tag)
-            {
-                case "Wood":
-                    weight = baseWeight * 0.5f;
-                    break;
-                case "Metal":
-                    weight = baseWeight * 3f;
-                    break;
-                case "Rug":
-                    weight = baseWeight * 0.25f;
-                    break;
-                default:
-                    weight = baseWeight;
-                    break;
-            }
-            if (weight == baseWeight)
-            {
-                if (di.name.ToLower().Contains("wood")) weight *= 0.5f;
-                if (di.name.ToLower().Contains("metal")) weight *= 3f;
-                //if (di.name.ToLower().Contains("wood")) weight *= 0.5f;
-            }
-            float volume = di.GetComponentInChildren<Collider>().bounds.GetVolumeCubic();
-            //MelonLogger.Msg($"{di.name} volume {volume} weight {volume * weight}");
-            di.m_Weight = ItemWeight.FromKilograms(Mathf.Clamp(Mathf.Round(volume * weight * 100f / 25f) * 25f / 100f, 0.1f, 50f)); //round to 0.25
-            */
-
-        }
         
+            float weight = 1f;
+            float baseWeight = 2f;
+            float volume = 1f;
+            string name = SanitizeObjectName(di.name);
+            bool change = true;
+
+            if (CarryableData.decorationOverrideData.ContainsKey(name) && CarryableData.decorationOverrideData[name].weight != 0f)
+            {
+                weight = CarryableData.decorationOverrideData[name].weight;
+            }
+            else if (di.name.ToLower().StartsWith("obj_curtain"))
+            {
+                weight = 0.5f;
+            }
+            else if (autoWeightTable.ContainsKey(name))
+            {
+                weight = autoWeightTable[name];
+            }
+            else if (Settings.options.doWeightCalculation)
+            {
+                switch (di.tag)
+                {
+                    case "Wood":
+                        weight = baseWeight * 0.66f;
+                        break;
+                    case "Metal":
+                        weight = baseWeight * 2.0f;
+                        if (di.name.ToLower().Contains("barrel")) weight *= 0.5f;
+                        break;
+                    case "Rug":
+                        weight = baseWeight * 0.25f;
+                        break;
+                    case "Glass":
+                        weight = baseWeight * 0.5f;
+                        break;
+                    default:
+                        weight = baseWeight;
+                        break;
+                }
+                if (weight == baseWeight)
+                {
+                    if (di.name.ToLower().Contains("wood")) weight *= 0.66f;
+                    if (di.name.ToLower().Contains("metal")) weight *= 2.0f;
+                    if (di.name.ToLower().Contains("sack")) weight *= 0.25f;
+                    if (di.name.ToLower().Contains("computer")) weight *= 0.5f;
+                    if (di.name.ToLower().Contains("lamp")) weight *= 0.25f;
+                }
+                foreach (Collider c in di.GetComponentsInChildren<Collider>())
+                {
+                    volume += c.bounds.GetVolumeCubic();
+                }
+
+                weight = Mathf.Round(volume * weight * 100f / 25f) * 25f / 100f; //round to 0.25
+                weight = Mathf.Clamp(weight, 0.1f, 30f);
+
+                Log(CC.Blue, $"Approx. for {name}: weight: {weight}, volume: {volume}");
+
+                autoWeightTable.Add(name, weight);
+            }
+            else 
+            { 
+                change = false;
+            }
+
+            if (change) di.m_Weight = ItemWeight.FromKilograms(weight); 
+
+            if (weightOnly) return;
+
+            if (catalogParsed.ContainsKey(name))
+            {
+                di.m_IconReference = new(catalogParsed[name]);
+                if (!di.m_IconReference.RuntimeKeyIsValid())
+                {
+                    Log(CC.Red, $"Inconsistent icon GUID for decoration: {name}. Reverting to placeholder");
+                    di.m_IconReference = new(catalogParsed[placeholderIconName]);
+                }
+            }
+            else
+            {
+                di.m_IconReference = new(catalogParsed[placeholderIconName]);
+                Log(CC.Magenta, $"Missing icon for decoration: {name}");
+            }
+        }
+
+        public static void SetLayersToInteractiveProp(DecorationItem di)
+        {
+            foreach (Collider c in di.GetComponentsInChildren<Collider>())
+            {
+                if (c.gameObject.layer == vp_Layer.Default || c.gameObject.layer == vp_Layer.TerrainObject)
+                {
+                    c.gameObject.layer = vp_Layer.InteractiveProp;
+                }
+            }
+            if (di.gameObject.layer == vp_Layer.Default || di.gameObject.layer == vp_Layer.TerrainObject)
+            {
+                di.gameObject.layer = vp_Layer.InteractiveProp;
+            }
+        }
+
+        public static void DisableNormalInteraction(DecorationItem di)
+        {
+            //di.enabled = true;
+
+            if (di.GetComponent<TraderRadio>())
+            {
+                di.GetComponent<TraderRadio>().enabled = false;
+                di.GetComponent<BlockPlacement>().m_BlockDecorationItemPlacement = false;
+            }
+
+            if (di.GetComponent<BreakDown>())
+            {
+                di.GetComponent<BreakDown>().m_AllowEditModePlacement = true;
+            }
+            /*
+            if (di.GetComponent<WaterSource>())
+            {
+                // Toilet
+            }
+
+            if (di.GetComponent<MillingMachine>())
+            {
+                // MillingMachine
+            }
+            if (di.GetComponent<AmmoWorkBench>())
+            {
+                // AmmoWorkBench
+            }
+            */
+            if (di.GetComponent<WoodStove>())
+            {
+                di.GetComponent<WoodStove>().enabled = false;
+            }
+        }
+
+        public static void RestoreNormalInteraction(DecorationItem di)
+        {
+            //di.enabled = false;
+
+            if (di.GetComponent<TraderRadio>())
+            {
+                di.GetComponent<TraderRadio>().enabled = true;
+                //go.GetComponent<BlockPlacement>().m_BlockDecorationItemPlacement = true;
+            }
+            /*
+            if (di.GetComponent<BreakDown>())
+            {
+                di.GetComponent<BreakDown>().m_AllowEditModePlacement = true;
+            }
+
+            if (di.GetComponent<WaterSource>())
+            {
+                // Toilet
+            }
+
+            if (di.GetComponent<MillingMachine>())
+            {
+                // MillingMachine
+            }
+            if (di.GetComponent<AmmoWorkBench>())
+            {
+                // AmmoWorkBench
+            }
+            */
+            if (di.GetComponent<WoodStove>())
+            {
+                di.GetComponent<WoodStove>().enabled = true;
+            }
+        }
+
+        public static DecorationItem? MakeIntoDecoration(GameObject go)
+        {
+            if (go && !go.GetComponentInChildren<DecorationItem>())
+            {
+                string name = SanitizeObjectName(go.name);
+
+                LocalizedString ls = TryGetLocalizedName(go);
+                DecorationItem di = go.AddComponent<DecorationItem>();
+                go.layer = vp_Layer.InteractiveProp;
+
+                di.m_DecorationPrefab = new(name);
+                di.GetDecorationPrefab();
+                di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
+                di.GetCraftingDisplayName();
+                //di.m_IconReference = new("");
+
+                RelevantSetupForDecorationItem(di);
+
+                if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable == false)
+                { 
+                    di.m_AllowInInventory = false;
+                }
+                if (!GameManager.GetSafehouseManager().IsCustomizing()) RestoreNormalInteraction(di);
+
+                return di;
+            }
+
+            return go.GetComponentInChildren<DecorationItem>(); // can be null
+        }
+
         public override void OnUpdate()
         {
+            if (InputManager.GetKeyDown(InputManager.m_CurrentContext, KeyCode.U))
+            {
+                if (Settings.options.debugLog && InterfaceManager.GetPanel<Panel_Inventory>().isActiveAndEnabled)
+                {
+                    DecorationItem di = InterfaceManager.GetPanel<Panel_Inventory>().GetCurrentlySelectedItem().m_DecorationItem;
+                    if (di)
+                    {
+                        MelonLogger.Msg(CC.Blue, $"{{\"{SanitizeObjectName(di.name)}\", new() {{ weight = {di.Weight.ToQuantity(1f).ToString().Replace(',', '.')}f }}}},");
+                        HUDMessage.AddMessage("Check console", false, true);
+                    }
+                    else
+                    { 
+                        HUDMessage.AddMessage("This is not a decoration item...", false, true);
+                    }
+                    
+                }
+            }
 
             if (InputManager.GetKeyDown(InputManager.m_CurrentContext, Settings.options.dupeKey))
             {
@@ -153,72 +361,23 @@ namespace SCPlus
                     dupe.name = SanitizeObjectName(dupe.name);
                     GameManager.GetPlayerManagerComponent().StartPlaceMesh(dupe, PlaceMeshFlags.DestroyOnCancel, di.m_PlacementRules);
                     justDupedContainer = true;
-
-
                 }
-            }   
+            }
+            /*
             if (InputManager.GetKeyDown(InputManager.m_CurrentContext, KeyCode.Insert))
             {
                 if (InterfaceManager.DetermineIfOverlayIsActive()) return;
 
                 GameObject go = GetRealGameObjectUnderCrosshair();
-                if (go && !go.GetComponentInChildren<DecorationItem>())
-                {
-                    if (go.GetComponent<TraderRadio>())
-                    {
-                        go.GetComponent<TraderRadio>().enabled = false;
-                        go.GetComponent<BlockPlacement>().m_BlockDecorationItemPlacement = false;
-                    }
-                    
-                    if (go.GetComponent<BreakDown>())
-                    {
-                        go.GetComponent<BreakDown>().m_AllowEditModePlacement = true;
-                    }
 
-                    if (go.GetComponent<WaterSource>())
-                    {
-                        // Toilet
-                    }
-
-                    if (go.GetComponent<MillingMachine>())
-                    {
-                        // MillingMachine
-                    }
-                    if (go.GetComponent<AmmoWorkBench>())
-                    {
-                        // AmmoWorkBench
-                    }
-
-
-
-                    LocalizedString ls = TryGetLocalizedName(go);
-                    DecorationItem di = go.AddComponent<DecorationItem>();
-                    go.layer = vp_Layer.InteractiveProp;
-                    
-                    //AssetReferenceDecorationItem ardi = new AssetReferenceDecorationItem("INTERACTIVE_LimbA_Prefab");
-                    di.m_DecorationPrefab = new AssetReferenceDecorationItem(SanitizeObjectName(go.name));
-                    di.GetDecorationPrefab();
-                    di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
-                    di.GetCraftingDisplayName();
-                    di.m_IconReference = new AssetReferenceTexture2D("");
-                    di.GetInventoryIconTexture();
-                    di.Awake();
-                    //Placeable pl = go.GetOrAddComponent<Placeable>();
-                    //pl.m_Addressable = new AssetReferencePlaceable(pl.m_Guid);
-                    //PlaceableManager.Add(pl);
-                    // trader radio
-
-
-
-                    HUDMessage.AddMessage(Localization.Get("SCP_Action_AttemptToMakeMovable") + TryGetLocalizedName(go).Text(), false, true);
-                }
+                MakeIntoDecoration(go);
                 //RadialSpawnManager.GetPrefabFromName("INTERACTIVE_LimbA_Prefab");
                 //AssetHelper.SafeLoadAssetAsync<GameObject>("INTERACTIVE_LimbA_Prefab").WaitForCompletion();
                 //AssetHelper.ValidateKey<GameObject>("INTERACTIVE_LimbA_Prefab");
                 //new AssetReference("INTERACTIVE_LimbA_Prefab").RuntimeKey.ToString);
+                HUDMessage.AddMessage(Localization.Get("SCP_Action_AttemptToMakeMovable") + TryGetLocalizedName(go).Text(), false, true);
             }
-
-
+            */
 
             if (!DEVInspectMode) return;
 
@@ -312,7 +471,3 @@ namespace SCPlus
         }
     }
 }
-
-
-
-

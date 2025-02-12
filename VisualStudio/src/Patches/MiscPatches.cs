@@ -1,18 +1,13 @@
-﻿using Il2Cpp;
-using Il2CppTLD.IntBackedUnit;
-using Unity.VisualScripting;
-using UnityEngine;
-
-namespace SCPlus
+﻿namespace SCPlus
 {
-    internal class UnbreakablePatches
+    internal class MiscPatches
     {
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
         private static class AlwaysCustomizable
         {
             internal static void Postfix(ref SafehouseManager __instance, ref bool __result)
             {
-                if (Settings.options.enableCustomizationAnywhere) __result = true;
+                __result = true; // if (Settings.options.enableCustomizationAnywhere)
             }
         }
 
@@ -22,7 +17,7 @@ namespace SCPlus
             internal static void Postfix(ref Panel_HUD __instance)
             {
                 if (Settings.options.hideIcon > 0)
-                { 
+                {
                     if (Settings.options.hideIcon == 1 && !GameManager.GetSafehouseManager().IsCustomizing()) // only hide when not ccustomizing
                     {
                         __instance.m_SafehouseRoot.active = false;
@@ -35,15 +30,17 @@ namespace SCPlus
             }
         }
 
-        
+
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetExtraWeightKG))] // 
         private static class AddDecorationToOverallCarriedWeight
         {
             internal static void Postfix(ref ItemWeight __result)
             {
-                if (GameManager.GetPlayerManagerComponent().IsInMeshPlacementMode() && GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem) 
+                if (GameManager.GetPlayerManagerComponent().IsInMeshPlacementMode() && GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem)
                 {
-                    __result = ItemWeight.FromKilograms(__result.ToQuantity(1f) + CarriedObjectData.carriedObjectWeight);
+                    __result = ItemWeight.FromKilograms(__result.ToQuantity(1f) + CarryableData.carriedObjectWeight);
+
+
                 }
             }
         }
@@ -53,9 +50,20 @@ namespace SCPlus
         {
             internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace)
             {
-                if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
+                //if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
 
                 objectToPlace.TryGetComponent(out DecorationItem di);
+
+                if (!di) // for non-vanilla decorations spawned with console
+                {
+                    foreach (var entry in CarryableData.carryablePrefabDefinition)
+                    {
+                        if (objectToPlace.name.ToLower().Contains(entry.Key.ToLower()))
+                        {
+                            di = SCPMain.MakeIntoDecoration(objectToPlace);
+                        }
+                    }
+                }
 
                 if (di)
                 {
@@ -68,7 +76,7 @@ namespace SCPlus
                             {
                                 r.gameObject.active = false;
                             }
-                        } 
+                        }
                     }
                     Il2CppSystem.Collections.Generic.List<DecorationItem> children = new();
                     foreach (DecorationItem child in di.DecorationChildren)
@@ -78,9 +86,11 @@ namespace SCPlus
                         children.Add(child);
                     }
                     di.m_DecorationChildren = children;
-                    
 
-                    WoodStove ws = __instance.GetComponent<WoodStove>();
+
+                    //GameObject parent = GetRealParent(__instance.transform);
+                    // potbelly stove still movable
+                    WoodStove ws = objectToPlace.GetComponentInChildren<WoodStove>(true);
                     if (ws && ws.Fire.IsBurning())
                     {
                         GameAudioManager.PlayGUIError();
@@ -94,12 +104,12 @@ namespace SCPlus
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
                     if (c.Length > 0)
                     {
-                        CarriedObjectData.carriedObjectWeight = 0f;
+                        CarryableData.carriedObjectWeight = 0f;
                         foreach (Container cc in c)
                         {
                             if (shouldCalculateWeight)
                             {
-                                CarriedObjectData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
+                                CarryableData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
 
                                 if (!SCPMain.justDupedContainer) continue;
                             }
@@ -119,9 +129,9 @@ namespace SCPlus
                         }
                         if (shouldCalculateWeight)
                         {
-                            CarriedObjectData.carriedObjectWeight += di.Weight.ToQuantity(1f);
-                            Log(CC.Gray, "Moving in-scene container, weight: " + CarriedObjectData.carriedObjectWeight);
-                            float totalCarriedWeight = CarriedObjectData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
+                            CarryableData.carriedObjectWeight += di.Weight.ToQuantity(1f);
+                            Log(CC.Gray, "Moving in-scene container, weight: " + CarryableData.carriedObjectWeight);
+                            float totalCarriedWeight = CarryableData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
                             if (totalCarriedWeight > GameManager.GetEncumberComponent().GetNoWalkCarryCapacityKG().ToQuantity(1f))
                             {
                                 GameAudioManager.PlayGUIError();
@@ -134,8 +144,8 @@ namespace SCPlus
                     }
                     else if (shouldCalculateWeight)
                     {
-                        CarriedObjectData.carriedObjectWeight = di.Weight.ToQuantity(1f);
-                        float totalCarriedWeight = CarriedObjectData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
+                        CarryableData.carriedObjectWeight = di.Weight.ToQuantity(1f);
+                        float totalCarriedWeight = CarryableData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
                         if (totalCarriedWeight > GameManager.GetEncumberComponent().GetNoWalkCarryCapacityKG().ToQuantity(1f))
                         {
                             GameAudioManager.PlayGUIError();
@@ -144,7 +154,17 @@ namespace SCPlus
                             return false;
                         }
                     }
+
+                    SCPlusCarryable? carryable = CarryableData.SetupCarryable(di, false); // listed in exitmeshplacement
+
+                    if (carryable) carryable.RetrieveAdditionalData();
+
+                    if (di.name.ToLower().Contains("curtain"))
+                    {
+                        di.name = SanitizeObjectName(di.name);
+                    }
                 }
+
                 return true;
             }
         }
@@ -157,7 +177,6 @@ namespace SCPlus
             {
                 di = __instance.m_ObjectToPlaceDecorationItem;
             }
-
             internal static void Postfix()
             {
                 SCPMain.justDupedContainer = false;
@@ -174,9 +193,76 @@ namespace SCPlus
                             }
                         }
                     }
+                    di.TryGetComponent(out SCPlusCarryable carryable);
+                    if (carryable) CarryableManager.Add(carryable);
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(InventoryGridItem), nameof(InventoryGridItem.RefreshDecorationItem))]
+        private static class RefreshInventoryGridIndicationIcon
+        {
+            internal static void Postfix(ref InventoryGridItem __instance)
+            {
+                DecorationItem di = __instance.GetDecorationItem();
+
+                if (di)
+                {
+                    if (SCPMain.iconGuidLookupList.Contains(di.IconReference.RuntimeKey.ToString()))
+                    {
+                        __instance.m_DecorationIndicator.GetComponent<UISprite>().spriteName = "ico_SafehouseCustomization";
+                        //InterfaceManager.GetPanel<Panel_Inventory>().m_ItemDescriptionPage.m_ItemNotesLabel.
+                        return;
+                    }
+                    __instance.m_DecorationIndicator.GetComponent<UISprite>().spriteName = "ico_Safehouse";
+                }
+            }
+        }
+
+
+        [HarmonyPatch(typeof(ItemDescriptionPage), nameof(ItemDescriptionPage.UpdateDecorationItemDescription))]
+        private static class ChangeCarryableInventoryLabel
+        {
+            internal static void Postfix(ref ItemDescriptionPage __instance, ref DecorationItem di)
+            {
+                if (SCPMain.iconGuidLookupList.Contains(di.IconReference.RuntimeKey.ToString()))
+                {
+                    if (di.GetComponent<SCPlusCarryable>())
+                    {
+                        __instance.m_ItemNotesLabel.text = Localization.Get("SCP_Label_Carryable");
+                        return;
+                    }
+                    __instance.m_ItemNotesLabel.text = Localization.Get("SCP_Label_Decoration");
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Panel_Container), nameof(Panel_Container.OnInventoryToContainer))]
+        private static class PreventStoringCarryablesInCarryables
+        {
+            internal static bool Prefix(ref Panel_Container __instance)
+            {
+                var item = __instance.GetCurrentlySelectedItem();
+                
+                if (!item.m_DecorationItem)
+                {
+                    return true;
+                }
+
+                DecorationItem di = item.m_DecorationItem;
+
+                SCPlusCarryable scItem = di.GetComponent<SCPlusCarryable>();
+                SCPlusCarryable scContainer = __instance.m_Container.GetComponentInParent<SCPlusCarryable>();
+
+                if (scItem && scContainer)
+                {
+                    GameAudioManager.PlayGUIError();
+                    HUDMessage.AddMessage(Localization.Get("SCP_Action_CantStoreCarryableInCarryable"), false, true);
+                    return false;
+                }
+
+                return true;
             }
         }
     }
 }
- 
