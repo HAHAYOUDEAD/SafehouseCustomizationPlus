@@ -216,10 +216,13 @@ namespace SCPlus
 
         public static void SetLayersToInteractiveProp(DecorationItem di)
         {
+            if (di.name.ToLower().Contains("forge")) return;
+
             foreach (Collider c in di.GetComponentsInChildren<Collider>())
             {
                 if (c.gameObject.layer == vp_Layer.Default || c.gameObject.layer == vp_Layer.TerrainObject)
                 {
+                    
                     c.gameObject.layer = vp_Layer.InteractiveProp;
                 }
             }
@@ -258,6 +261,10 @@ namespace SCPlus
                 // AmmoWorkBench
             }
             */
+            if (di.name.ToLower().Contains("forge"))
+            {
+                di.gameObject.layer = vp_Layer.InteractiveProp;
+            }
             if (di.GetComponent<WoodStove>())
             {
                 di.GetComponent<WoodStove>().enabled = false;
@@ -293,6 +300,10 @@ namespace SCPlus
                 // AmmoWorkBench
             }
             */
+            if (di.name.ToLower().Contains("forge"))
+            {
+                di.gameObject.layer = vp_Layer.TerrainObject;
+            }
             if (di.GetComponent<WoodStove>())
             {
                 di.GetComponent<WoodStove>().enabled = true;
@@ -338,7 +349,7 @@ namespace SCPlus
                     DecorationItem di = InterfaceManager.GetPanel<Panel_Inventory>().GetCurrentlySelectedItem().m_DecorationItem;
                     if (di)
                     {
-                        MelonLogger.Msg(CC.Blue, $"{{\"{SanitizeObjectName(di.name)}\", new() {{ weight = {di.Weight.ToQuantity(1f).ToString().Replace(',', '.')}f }}}},");
+                        MelonLogger.Msg(CC.Blue, $"{{\"{SanitizeObjectName(di.name)}\", new() {{ weight = {di.Weight.ToQuantity(1f).ToString().Replace(',', '.')}f }} }},");
                         HUDMessage.AddMessage("Check console", false, true);
                     }
                     else

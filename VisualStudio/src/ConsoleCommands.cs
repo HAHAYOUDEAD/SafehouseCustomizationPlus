@@ -39,6 +39,15 @@
                 {
                     go = CarryableData.carryablePrefabDefinition[name].reconstructAction.Invoke();
                 }
+                if (go && name.ToLower().Contains("millingmachine"))
+                {
+                    MelonCoroutines.Start(PrepareMillingMachine(go));
+                }
+                if (go && name.ToLower().Contains("forge"))
+                {
+                    if (go.GetComponentInChildren<CapsuleCollider>())
+                        go.GetComponentInChildren<CapsuleCollider>().radius = 0.06f;
+                }
             }
 
             if (go == null)

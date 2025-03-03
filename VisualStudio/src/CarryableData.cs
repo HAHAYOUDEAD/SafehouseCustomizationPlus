@@ -158,6 +158,9 @@ namespace SCPlus
             {"CONTAINER_ForestryCrateB", new() {weight = 10f} },
             {"CONTAINER_FirewoodBin", new() {weight = 10f} },
             {"CONTAINER_CacheStoreCommon", new() {weight = 0.5f} },
+            {"OBJ_Piano_Prefab", new() { weight = 40f } },
+            {"OBJ_CurtainStage_Prefab", new() { weight = 10f } },
+            {"OBJ_ClothesHanger_Prefab", new() { weight = 0.1f }},
         };
 
         public static GameObject ReconstructStoveWood()

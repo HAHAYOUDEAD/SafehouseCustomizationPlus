@@ -37,7 +37,7 @@ namespace SCPlus
 {
     internal static class Utility
     {
-        public const string modVersion = "1.8.0";
+        public const string modVersion = "1.8.1";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -436,6 +436,7 @@ namespace SCPlus
 
         public static IEnumerator PrepareMillingMachine(GameObject go)
         {
+            go.name = "INTERACTIVE_IndustrialMillingMachine";
             SimpleInteraction si = go.AddComponent<SimpleInteraction>();
             si.m_DefaultHoverText = new LocalizedString() { m_LocalizationID = "GAMEPLAY_MillingMachine" };
 

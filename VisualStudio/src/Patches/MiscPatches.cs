@@ -1,4 +1,6 @@
-﻿namespace SCPlus
+﻿using Il2CppTLD.BigCarry;
+
+namespace SCPlus
 {
     internal class MiscPatches
     {
@@ -8,6 +10,38 @@
             internal static void Postfix(ref SafehouseManager __instance, ref bool __result)
             {
                 __result = true; // if (Settings.options.enableCustomizationAnywhere)
+            }
+        }
+        
+        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.TryStartCustomizing))]
+        private static class NoCustomizationWithTravois
+        {
+            internal static bool Prefix(ref SafehouseManager __instance, ref bool __result)
+            {
+                if (GameManager.GetPlayerAnimationComponent().m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.ToLower().Contains("travois"))
+                {
+                    GameAudioManager.PlayGUIError();
+                    HUDMessage.AddMessage(Localization.Get("SCP_Action_NoCustomizationWithTravois"), true, true);
+                    __result = false;
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(BigCarryItem), nameof(BigCarryItem.PerformInteraction))]
+        private static class NoTravoisWhenCustomizing
+        {
+            internal static bool Prefix(ref BigCarryItem __instance, ref bool __result)
+            {
+                if (GameManager.GetSafehouseManager().IsCustomizing() && __instance.name.ToLower().Contains("travois"))
+                {
+                    GameAudioManager.PlayGUIError();
+                    HUDMessage.AddMessage(Localization.Get("SCP_Action_NoTravoisWhenCustomizing"), true, true);
+                    __result = false;
+                    return false;
+                }
+                return true;
             }
         }
 

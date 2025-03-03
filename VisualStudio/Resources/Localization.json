@@ -39,6 +39,16 @@
     "English": "This item cannot be stored in this container",
     "Russian": "Этот объект нельзя хранить в этом контейнере"
   },
+  "SCP_Action_NoCustomizationWithTravois": {
+
+    "English": "Cannot customize while carrying travois",
+    "Russian": "Режим обустройства недоступен при переноске волоки"
+  },
+  "SCP_Action_NoTravoisWhenCustomizing": {
+
+    "English": "Cannot carry travois while customizing",
+    "Russian": "Переноска волоки недоступна в режиме обустройства"
+  },
 
 
 

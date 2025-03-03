@@ -1,4 +1,6 @@
-﻿namespace SCPlus
+﻿using UnityEngine.ResourceManagement.ResourceLocations;
+
+namespace SCPlus
 {
     internal class SaveLoadPatches // save-loading
     {
@@ -218,6 +220,7 @@
                             break;
                         case CT.MillingMachine:
                             MelonCoroutines.Start(PrepareMillingMachine(instance));
+                            
                             break;
                         default:
                             break;
@@ -269,20 +272,17 @@
 
 
         /*
-        [HarmonyPatch(typeof(Placeable), nameof(Placeable.Deserialize))]
-        private static class LoadFireBarrelData
+        [HarmonyPatch(typeof(AssetHelper), nameof(AssetHelper.InstantiateAssetAsync))]
+        private static class testtest
         {
-            internal static void Postfix(ref Placeable __instance, ref string guid)
-            {
-                if (string.IsNullOrEmpty(guid)) return;
-
-                WoodStove ws = __instance.GetComponent<WoodStove>();
-                if (!ws) return; 
-
-                if (SCPMain.fireBarrelData.ContainsKey(guid))
+            internal static void Prefix(ref IResourceLocation resourceLocation)
+            { 
+                string line = "failed";
+                if (resourceLocation != null)
                 {
-                    ws.Fire.Deserialize(SCPMain.fireBarrelData[guid]);b
+                    line = $"Key: {resourceLocation.PrimaryKey} | InternalID: {resourceLocation.InternalId}";
                 }
+                MelonLogger.Msg(resourceLocation != null ? CC.Blue : CC.Red, line);
             }
         }
         */
