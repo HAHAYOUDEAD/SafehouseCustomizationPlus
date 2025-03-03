@@ -2,42 +2,50 @@
   "SCP_Action_CantPickupHot": {
 
     "English": "Cannot pickup while still burning",
-    "Russian": "Слишком горячо чтобы поднять"
+    "Russian": "Слишком горячо чтобы поднять",
+    "Turkish": "Yanmaya devam ederken alınamaz"
   },
   "SCP_Action_CantDestroyHot": {
 
     "English": "Cannot destroy while still burning",
-    "Russian": "Слишком горячо чтобы разломать"
+    "Russian": "Слишком горячо чтобы разломать",
+    "Turkish": "Hala yanarken imha edilemez"
   },
   "SCP_Action_CantMoveHot": {
 
     "English": "Cannot move while still burning",
-    "Russian": "Слишком горячо чтобы сдвинуть"
+    "Russian": "Слишком горячо чтобы сдвинуть",
+    "Turkish": "Hareket edemeyecek kadar sıcak."
   },
   "SCP_Action_CantMoveHeavy": {
 
     "English": "Too heavy to move",
-    "Russian": "Слишком тяжело чтобы сдвинуть"
+    "Russian": "Слишком тяжело чтобы сдвинуть",
+    "Turkish": "Taşımak için çok ağır"
   },
   "SCP_Action_IsPartOfStaticBatch": {
 
     "English": "This object cannot be moved",
-    "Russian": "Этот объект нельзя сдвинуть"
+    "Russian": "Этот объект нельзя сдвинуть",
+    "Turkish": "Bu nesne taşınamaz"
   },
   "SCP_Action_NoValidObject": {
 
     "English": "No valid object in sight",
-    "Russian": "Нет подходящего объекта в поле зрения"
+    "Russian": "Нет подходящего объекта в поле зрения",
+    "Turkish": "Görünürde geçerli bir nesne yok"
   },
   "SCP_Action_AttemptToMakeMovable": {
 
     "English": "Attempting to make movable: ",
-    "Russian": "Пытаемся сдвинуть: "
+    "Russian": "Пытаемся сдвинуть: ",
+    "Turkish": "Taşınır hale getirilmeye çalışılıyor: "
   },
   "SCP_Action_CantStoreCarryableInCarryable": {
 
     "English": "This item cannot be stored in this container",
-    "Russian": "Этот объект нельзя хранить в этом контейнере"
+    "Russian": "Этот объект нельзя хранить в этом контейнере",
+    "Turkish": "Bu ürün bu kapta saklanamaz"
   },
   "SCP_Action_NoCustomizationWithTravois": {
 
@@ -55,11 +63,11 @@
 
   "SCP_Label_Decoration": {
 
-    "English": "SC+ Decoration"
+    "English": "SC+ Decoration",
   },
   "SCP_Label_Carryable": {
 
-    "English": "SC+ Carryable"
+    "English": "SC+ Carryable",
   },
 
 
@@ -71,14 +79,14 @@
 
   "SCP_Deco_TraderRadio": {
 
-    "English": "Shortwave Radio"
+    "English": "Shortwave Radio",
   },
   "SCP_Deco_FlareGunCase": {
 
-    "English": "Emergency Kit"
+    "English": "Emergency Kit",
   },
   "SCP_Deco_AmmoWorkbench": {
 
-    "English": "Ammunition Workbench"
+    "English": "Ammunition Workbench",
   }
 }
