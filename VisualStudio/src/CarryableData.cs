@@ -152,7 +152,7 @@ namespace SCPlus
             {"INTERACTIVE_PotBellyStove", new() {weight = 30f} },
             {"INTERACTIVE_StoveWoodC", new() {weight = 30f} },
             {"INTERACTIVE_StoveMetalA", new() {weight = 50f} },
-            {"INTERACTIVE_Forge", new() {weight = 50f} },
+            {"INTERACTIVE_Forge", new() {nameLocID = "SCP_Deco_Forge", weight = 50f} },
             {"INTERACTIVE_IndustrialMillingMachine", new() {weight = 50f, placementOffset = Vector3.up * 0.75f} },
             {"CONTAINER_ForestryCrate", new() {weight = 10f} },
             {"CONTAINER_ForestryCrateB", new() {weight = 10f} },

@@ -63,11 +63,11 @@
 
   "SCP_Label_Decoration": {
 
-    "English": "SC+ Decoration",
+    "English": "SC+ Decoration"
   },
   "SCP_Label_Carryable": {
 
-    "English": "SC+ Carryable",
+    "English": "SC+ Carryable"
   },
 
 
@@ -79,14 +79,14 @@
 
   "SCP_Deco_TraderRadio": {
 
-    "English": "Shortwave Radio",
+    "English": "Shortwave Radio"
   },
   "SCP_Deco_FlareGunCase": {
 
-    "English": "Emergency Kit",
+    "English": "Emergency Kit"
   },
   "SCP_Deco_AmmoWorkbench": {
 
-    "English": "Ammunition Workbench",
+    "English": "Ammunition Workbench"
   }
 }
