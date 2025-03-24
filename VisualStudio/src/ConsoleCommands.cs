@@ -9,6 +9,11 @@
         {
             internal static void Postfix()
             {
+                if (!SCPMain.decorationListPopulated)
+                {
+                    SCPMain.decorationListPopulated = true;
+                    MelonCoroutines.Start(ConsoleCommands.CONSOLE_PopulateDecortionsListEnum()); 
+                }
                 uConsole.RegisterCommand("decoration_spawn", new Action(CONSOLE_TrySpawnDecoration));
                 uConsole.RegisterCommand("decoration_search", new Action(CONSOLE_SearchDecoration));
                 uConsole.RegisterCommand("decoration_list_repopulate", new Action(() => MelonCoroutines.Start(CONSOLE_PopulateDecortionsListEnum())));

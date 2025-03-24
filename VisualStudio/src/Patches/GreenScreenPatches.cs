@@ -1,5 +1,6 @@
 ﻿namespace SCPlus
 {
+
     internal class GreenScreenPatches
     {
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.StartPlaceMesh), [typeof(GameObject), typeof(float), typeof(PlaceMeshFlags), typeof(PlaceMeshRules)])]

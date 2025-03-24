@@ -1,5 +1,6 @@
 ﻿namespace SCPlus
 {
+
     internal class DecorationPatches
     {
         public static bool injectPdids = false;
@@ -132,6 +133,7 @@
         {
             internal static bool Prefix(ref DecorationItem __instance)
             {
+                
                 WoodStove ws = __instance.GetComponentInChildren<WoodStove>();
                 if (ws && ws.Fire.IsBurning())
                 {

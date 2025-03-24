@@ -22,13 +22,16 @@ namespace SCPlus
         public static bool instantiatingCarryables;
         public static bool justDupedContainer;
 
+        public static bool decorationListPopulated;
+
         public override void OnInitializeMelon()
         {
             modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
             LocalizationManager.LoadJsonLocalization(LoadEmbeddedJSON("Localization.json"));
 
             Settings.OnLoad();
-
+            
+            
             AsyncOperationHandle<IResourceLocator> handle = null;
             try
             {
@@ -57,9 +60,10 @@ namespace SCPlus
             {
                 Log(CC.Red, $"Catalog {iconsCatalog} load failed: " + e.ToString());
             }
-
-            //handle.Release();
-            MelonCoroutines.Start(ConsoleCommands.CONSOLE_PopulateDecortionsListEnum());
+            
+            //handle?.Release();
+            
+            
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)

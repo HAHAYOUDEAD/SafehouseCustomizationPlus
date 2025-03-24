@@ -31,13 +31,14 @@ global using CS = SCPlus.CarryableData.CarryableState;
 global using CT = SCPlus.CarryableData.CarryableType;
 global using SceneManager = UnityEngine.SceneManagement.SceneManager;
 using Il2CppTLD.ModularElectrolizer;
+using System.Diagnostics;
 using System.IO.Compression;
 
 namespace SCPlus
 {
     internal static class Utility
     {
-        public const string modVersion = "1.8.1";
+        public const string modVersion = "1.8.2";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -247,9 +248,11 @@ namespace SCPlus
         }
 
         // stolen from Remove Clutter
-        internal static List<GameObject> GetRootParents()
+        internal static HashSet<GameObject> GetRootParents()
         {
-            List<GameObject> rootObj = new List<GameObject>();
+            Stopwatch stopwatch3 = Stopwatch.StartNew();
+
+            HashSet<GameObject> rootObj = new();
 
             for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
             {
@@ -265,23 +268,30 @@ namespace SCPlus
                         obj.name.StartsWith("SCRIPT_") ||
                         obj.name.StartsWith("CORPSE_") ||
                         obj.name.StartsWith("GEAR_") ||
-                        obj.name.StartsWith("INTERACTIVE_");
+                        obj.name.StartsWith("Vehicles") ||
+                        obj.name.StartsWith("INTERACTIVE_") ||
+                        obj.name.StartsWith("FleePoints") ||
+                        obj.name.StartsWith("Wildlife");
                     if (flag) continue;
                     rootObj.Add(obj);
                 }
             }
 
+            stopwatch3.Stop();
+            Log(CC.Yellow, $"SC+ Root objects lookup time: {stopwatch3.ElapsedMilliseconds}  ms");
+
             return rootObj;
         }
 
         // stolen from Remove Clutter
-        internal static void GetChildrenWithName(GameObject obj, string name, List<GameObject> result)
+        internal static void GetChildrenWithName(GameObject obj, string name, HashSet<GameObject> result)
         {
             if (obj.transform.childCount > 0)
             {
                 for (int i = 0; i < obj.transform.childCount; i++)
                 {
                     GameObject child = obj.transform.GetChild(i).gameObject;
+                    
 
                     if (child.name.ToLower().Contains(name.ToLower()))
                     {
@@ -289,6 +299,17 @@ namespace SCPlus
 
                         continue;
                     }
+
+                    bool flag = child.name.ToLower().StartsWith("tree") ||
+                        child.name.ToLower().StartsWith("rock") ||
+                        child.name.ToLower().StartsWith("terrain") ||
+                        child.name.ToLower().StartsWith("cliff") ||
+                        child.name.ToLower().StartsWith("gear_") ||
+                        child.name.ToLower().StartsWith("light") ||
+                        child.name.ToLower().StartsWith("newlight") ||
+                        child.name.ToLower().StartsWith("water");
+                    if (flag) continue;
+                    
                     GetChildrenWithName(child, name, result);
                 }
             }
@@ -376,7 +397,7 @@ namespace SCPlus
         {
             if (Settings.options.debugLog)
             {
-                MelonLogger.Msg(color, message);
+               Melon<SCPMain>.Logger.Msg(color, message);
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿namespace SCPlus
 {
+
     internal class BreakDownPatches
     {
 
@@ -109,4 +110,5 @@
             }
         }
     }
+
 }

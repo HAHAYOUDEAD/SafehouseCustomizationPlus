@@ -1,7 +1,9 @@
 ﻿using UnityEngine.ResourceManagement.ResourceLocations;
+using System.Diagnostics;
 
 namespace SCPlus
 {
+
     internal class SaveLoadPatches // save-loading
     {
 
@@ -66,6 +68,14 @@ namespace SCPlus
         {
             internal static void Postfix(ref string sceneSaveName)
             {
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Stopwatch stopwatch2 = Stopwatch.StartNew();
+                int lastOperationTookTime = 0;
+
+                Log(CC.Red, $"SC+ Loading started");
+
+
                 string? serializedSaveData = dataManager.Load(movablesSaveDataTag + "_" + sceneSaveName);
                 string? addSerializedSaveData = dataManager.Load(movablesSaveDataTag + "_carried");
 
@@ -82,6 +92,11 @@ namespace SCPlus
                 {
                     JSON.MakeInto(JSON.Load(addSerializedSaveData), out addDataList);
                 }
+
+
+                Log(CC.Yellow, $"SC+ Deserializing time: {stopwatch.ElapsedMilliseconds} ms");
+                lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
+
 
                 //List<GameObject> fromGuids = new List<GameObject>();
 
@@ -107,15 +122,20 @@ namespace SCPlus
 
                 dataList = dataList.Concat(addDataList).ToList();
 
+                Log(CC.Yellow, $"SC+ Data parse time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
+                lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
+
                 // making objects movable and loading positions if was moved inside same scene
                 foreach (GameObject rootGo in GetRootParents())
                 {
-                    List<GameObject> result = new List<GameObject>();
+                    HashSet<GameObject> result = new();
 
                     foreach (var entry in CarryableData.carryablePrefabDefinition)
                     {
                         GetChildrenWithName(rootGo, entry.Key, result);
                     }
+                    Log(CC.Yellow, $"SC+ Children of {rootGo.name} lookup time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
+                    lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
 
                     foreach (GameObject child in result)
                     {
@@ -188,9 +208,16 @@ namespace SCPlus
                             }
                         }
                     }
+                    Log(CC.Green, $"SC+ Children of {rootGo.name} operations time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
+                    lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
                 }
 
+                stopwatch.Stop();
+                MelonLogger.Msg(CC.Red, $"SC+ Loading pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+
                 if (dataList.Count == 0) return;
+
+                stopwatch.Restart();
 
                 //SCPMain.instantiatingCarryables = true;
                 GameObject globalParent = new GameObject("CarryableTemp");
@@ -266,7 +293,16 @@ namespace SCPlus
                     }
                 }
                 GameObject.Destroy(globalParent);
+
+
+                stopwatch.Stop();
+                stopwatch2.Stop();
+                MelonLogger.Msg(CC.Red, $"SC+ Loading pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+                MelonLogger.Msg(CC.Red, $"SC+ Total loading: {stopwatch2.ElapsedMilliseconds} ms ({stopwatch2.ElapsedTicks} ticks)");
+
             }
+
+
         }
 
 

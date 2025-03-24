@@ -2,8 +2,10 @@
 
 namespace SCPlus
 {
+
     internal class MiscPatches
     {
+        
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
         private static class AlwaysCustomizable
         {
@@ -299,4 +301,5 @@ namespace SCPlus
             }
         }
     }
+
 }

@@ -1,5 +1,6 @@
 ﻿namespace SCPlus
 {
+
     internal class WorkbenchPatches
     {
 
