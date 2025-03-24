@@ -1,3 +1,6 @@
+# Warning
+Consider the mod experimental. There were no reports of game-breaking bugs, but it touches the thin matter of saving your data, so there is a slim possibility of items being lost. Consider making backups of your savefile just in case
+
 # Features
 - Enter customization mode anywhere
 - Pickup and move a lot more objects, including:
