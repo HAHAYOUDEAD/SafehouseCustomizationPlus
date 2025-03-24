@@ -1,5 +1,19 @@
-# SafehouseCustomizationPlus
-Enter customization mode anywhere, a lot of objects made movable, including interactive stuff like stoves
+# Features
+- Enter customization mode anywhere
+- Pickup and move a lot more objects, including:
+  - containers,
+  - stoves,
+  - milling machine,
+  - flaregun case with contents,
+  - ammunition workbench,
+  - forge...
+      
+- Revert workbench interaction to how it was before
+- Weight of a decoration counts when moving it
+- Custom icons (incomplete)
+- `decoration_spawn` and `decoration_search` commands
 
-# Requrements
-ModSettings, ModData, LocalizationUtilities
+## Installation:
+Unpack latest [release](https://github.com/HAHAYOUDEAD/SafehouseCustomizationPlus/releases) .zip into `.../Mods/`
+
+Requires [ModSettings](https://github.com/DigitalzombieTLD/ModSettings), [ModData](https://github.com/dommrogers/ModData), [LocalizationUtilities](https://github.com/dommrogers/LocalizationUtilities) 
