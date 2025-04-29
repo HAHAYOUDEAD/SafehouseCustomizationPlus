@@ -51,6 +51,12 @@ namespace SCPlus
         public Vector3 placementOffset = Vector3.zero;
     }
 
+    internal class BlacklistObject
+    {
+        public string name;
+        public Vector3 pos;
+    }
+
     internal class CarryableData
     {
         public static float carriedObjectWeight = 0f;
@@ -161,6 +167,16 @@ namespace SCPlus
             {"OBJ_Piano_Prefab", new() { weight = 40f } },
             {"OBJ_CurtainStage_Prefab", new() { weight = 10f } },
             {"OBJ_ClothesHanger_Prefab", new() { weight = 0.1f }},
+        };
+
+        public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "CanyonRoadTransitionZone", 
+                [
+                 new() { name = "OBJ_FishingCabinDresser", pos = new Vector3(233.2839f, 40.3067f, 421.9208f) }, 
+                 new() { name = "OBJ_FishingCabinCupboard", pos = new Vector3(232.6224f, 40.2873f, 423.2194f) }
+                ] 
+            }
         };
 
         public static GameObject ReconstructStoveWood()

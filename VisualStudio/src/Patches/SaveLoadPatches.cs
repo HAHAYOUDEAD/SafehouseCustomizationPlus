@@ -1,5 +1,6 @@
 ﻿using UnityEngine.ResourceManagement.ResourceLocations;
 using System.Diagnostics;
+using Il2CppTLD.BigCarry;
 
 namespace SCPlus
 {
@@ -63,17 +64,13 @@ namespace SCPlus
             }
         }
 
+
         [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.LoadSceneData))]
         private static class MakeStuffMovable
         {
             internal static void Postfix(ref string sceneSaveName)
             {
 
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                Stopwatch stopwatch2 = Stopwatch.StartNew();
-                int lastOperationTookTime = 0;
-
-                Log(CC.Red, $"SC+ Loading started");
 
 
                 string? serializedSaveData = dataManager.Load(movablesSaveDataTag + "_" + sceneSaveName);
@@ -94,8 +91,8 @@ namespace SCPlus
                 }
 
 
-                Log(CC.Yellow, $"SC+ Deserializing time: {stopwatch.ElapsedMilliseconds} ms");
-                lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
+                //Log(CC.Yellow, $"SC+ Deserializing time: {stopwatch.ElapsedMilliseconds} ms");
+                //lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
 
 
                 //List<GameObject> fromGuids = new List<GameObject>();
@@ -122,23 +119,51 @@ namespace SCPlus
 
                 dataList = dataList.Concat(addDataList).ToList();
 
-                Log(CC.Yellow, $"SC+ Data parse time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
-                lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
+                //Log(CC.Yellow, $"SC+ Data parse time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
+                //lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
 
                 // making objects movable and loading positions if was moved inside same scene
+
+
+
+
+
+
+                //MelonCoroutines.Start(SCPMain.ProcessCarryables(dataList, Settings.options.carryableProcessingInterval));
+
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Stopwatch stopwatch2 = Stopwatch.StartNew();
+                int lastOperationTookTime = 0;
+
+                Log(CC.Red, $"SC+ Loading started");
+
                 foreach (GameObject rootGo in GetRootParents())
                 {
                     HashSet<GameObject> result = new();
 
                     foreach (var entry in CarryableData.carryablePrefabDefinition)
                     {
+                        //MelonCoroutines.Start(GetChildrenWithNameEnum(rootGo, entry.Key, result));
                         GetChildrenWithName(rootGo, entry.Key, result);
+                        /*
+                        if (carryableCoroutineCounter > cutoff)
+                        {
+                            carryableCoroutineCounter = 0;
+                            //Log("Frame skip");
+                            yield return new WaitForEndOfFrame();
+                        }
+                        */
                     }
+
+
                     Log(CC.Yellow, $"SC+ Children of {rootGo.name} lookup time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
                     lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
 
                     foreach (GameObject child in result)
                     {
+
+
                         if (child.IsNullOrDestroyed() || !child.active) continue;
 
                         DecorationItem di = SCPMain.MakeIntoDecoration(child);
@@ -213,7 +238,7 @@ namespace SCPlus
                 }
 
                 stopwatch.Stop();
-                MelonLogger.Msg(CC.Red, $"SC+ Loading pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+                Log(CC.Red, $"SC+ Loading pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
 
                 if (dataList.Count == 0) return;
 
@@ -247,7 +272,7 @@ namespace SCPlus
                             break;
                         case CT.MillingMachine:
                             MelonCoroutines.Start(PrepareMillingMachine(instance));
-                            
+
                             break;
                         default:
                             break;
@@ -288,7 +313,7 @@ namespace SCPlus
                         if (shouldLoadAdditionalData) carryable.RetrieveAdditionalData(); // data.dataToSave
                     }
                     else
-                    { 
+                    {
                         Log(CC.Red, $"Failed to instantiate {data.name}, check path: {otm.assetPath}");
                     }
                 }
@@ -297,8 +322,8 @@ namespace SCPlus
 
                 stopwatch.Stop();
                 stopwatch2.Stop();
-                MelonLogger.Msg(CC.Red, $"SC+ Loading pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
-                MelonLogger.Msg(CC.Red, $"SC+ Total loading: {stopwatch2.ElapsedMilliseconds} ms ({stopwatch2.ElapsedTicks} ticks)");
+                Log(CC.Red, $"SC+ Loading pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+                Log(CC.Red, $"SC+ Total loading: {stopwatch2.ElapsedMilliseconds} ms ({stopwatch2.ElapsedTicks} ticks)");
 
             }
 
@@ -323,4 +348,5 @@ namespace SCPlus
         }
         */
     }
+   
 }

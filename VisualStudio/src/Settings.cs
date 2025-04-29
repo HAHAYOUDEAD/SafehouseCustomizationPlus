@@ -61,6 +61,11 @@ namespace SCPlus
         [Description("Send debug info to console")]
         public bool debugLog = false;
 
+        [Name("Load interval")]
+        [Description("Skip frame after how many objects checked. Lower values will lag less but take longer, higher - lag more and take less time\n\nDO NOT quit or enter transition while it loads")]
+        [Slider(2, 100)]
+        public int carryableProcessingInterval = 10;
+
 
         [Section("Cheats")]
         [Name("Duplicate")]

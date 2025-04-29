@@ -1,10 +1,21 @@
 ﻿using Il2CppTLD.BigCarry;
+using Il2CppTLD.UI.Scroll;
 
 namespace SCPlus
 {
 
     internal class MiscPatches
     {
+        /*
+        [HarmonyPatch(typeof(Addressables), nameof(Addressables.LoadContentCatalogAsync), [typeof(string), typeof(string)])]
+        private static class dfhdfghg
+        {
+            internal static void Prefix(ref string catalogPath)
+            {
+                MelonLogger.Msg(CC.Magenta, "Loading catalog: " + catalogPath);
+            }
+        }  
+        */
         
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
         private static class AlwaysCustomizable

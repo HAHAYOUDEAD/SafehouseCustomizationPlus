@@ -18,6 +18,22 @@
                     __instance.enabled = false;
                 }
 
+                
+                if (CarryableData.blacklistSpecific.ContainsKey(GameManager.m_ActiveScene))
+                {
+                    foreach (var entry in CarryableData.blacklistSpecific[GameManager.m_ActiveScene]) 
+                    {
+                        if (entry.name == name)
+                        {
+                            if (WithinDistance(__instance.transform.position, entry.pos, 0.1f))
+                            {
+                                __instance.m_AllowInInventory = false;
+                                __instance.enabled = false;
+                            }
+                        }
+                    }
+                }
+
                 BreakDown bd = __instance.GetComponentInChildren<BreakDown>();
 
                 if (!__instance.m_AllowInInventory)

@@ -38,7 +38,7 @@ namespace SCPlus
 {
     internal static class Utility
     {
-        public const string modVersion = "1.8.2";
+        public const string modVersion = "1.8.3";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -57,6 +57,7 @@ namespace SCPlus
 
         public static readonly string missingGuid = "MISSING GUID";
 
+        public static int childrenLookupCoroutineRunning = 0;
 
 
         public static bool IsScenePlayable()
@@ -290,6 +291,44 @@ namespace SCPlus
             {
                 for (int i = 0; i < obj.transform.childCount; i++)
                 {
+                    SCPMain.carryableCoroutineCounter++;
+
+                    GameObject child = obj.transform.GetChild(i).gameObject;
+
+
+                    if (child.name.ToLower().Contains(name.ToLower()))
+                    {
+                        result.Add(child);
+
+                        continue;
+                    }
+
+                    bool flag = child.name.ToLower().StartsWith("tree") ||
+                        child.name.ToLower().StartsWith("rock") ||
+                        child.name.ToLower().StartsWith("terrain") ||
+                        child.name.ToLower().StartsWith("cliff") ||
+                        child.name.ToLower().StartsWith("gear_") ||
+                        child.name.ToLower().StartsWith("light") && !child.name.ToLower().StartsWith("lighth") ||
+                        child.name.ToLower().StartsWith("newlight") ||
+                        //child.name.ToLower().Contains("travois") ||
+                        child.name.ToLower().StartsWith("water");
+                    if (flag) continue;
+
+                    GetChildrenWithName(child, name, result);
+                }
+            }
+        }
+
+
+        internal static IEnumerator GetChildrenWithNameEnum(GameObject obj, string name, HashSet<GameObject> result)
+        {
+            childrenLookupCoroutineRunning++;
+            if (obj.transform.childCount > 0)
+            {
+                for (int i = 0; i < obj.transform.childCount; i++)
+                {
+                    SCPMain.carryableCoroutineCounter++;
+
                     GameObject child = obj.transform.GetChild(i).gameObject;
                     
 
@@ -305,14 +344,23 @@ namespace SCPlus
                         child.name.ToLower().StartsWith("terrain") ||
                         child.name.ToLower().StartsWith("cliff") ||
                         child.name.ToLower().StartsWith("gear_") ||
-                        child.name.ToLower().StartsWith("light") ||
+                        child.name.ToLower().StartsWith("light") && !child.name.ToLower().StartsWith("lighth") ||
                         child.name.ToLower().StartsWith("newlight") ||
                         child.name.ToLower().StartsWith("water");
                     if (flag) continue;
-                    
-                    GetChildrenWithName(child, name, result);
+
+                    if (SCPMain.carryableCoroutineCounter > Settings.options.carryableProcessingInterval)
+                    {
+                        SCPMain.carryableCoroutineCounter = 0;
+                        //Log(CC.Gray, "Frame skip");
+                        yield return new WaitForEndOfFrame();
+                        yield return new WaitForEndOfFrame();
+                    }
+                    MelonCoroutines.Start(GetChildrenWithNameEnum(child, name, result));
                 }
             }
+            childrenLookupCoroutineRunning--;
+            yield break;
         }
 
 
