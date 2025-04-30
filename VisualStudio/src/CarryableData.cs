@@ -171,12 +171,14 @@ namespace SCPlus
 
         public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)
         {
+            /*
             { "CanyonRoadTransitionZone", 
                 [
                  new() { name = "OBJ_FishingCabinDresser", pos = new Vector3(233.2839f, 40.3067f, 421.9208f) }, 
                  new() { name = "OBJ_FishingCabinCupboard", pos = new Vector3(232.6224f, 40.2873f, 423.2194f) }
                 ] 
             }
+            */
         };
 
         public static GameObject ReconstructStoveWood()

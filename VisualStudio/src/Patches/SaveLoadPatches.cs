@@ -8,6 +8,9 @@ namespace SCPlus
     internal class SaveLoadPatches // save-loading
     {
 
+
+
+
         [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.SaveSceneData))]
         private static class SaveOmittedData
         {

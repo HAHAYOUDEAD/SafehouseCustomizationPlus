@@ -5,7 +5,7 @@
     {
         public static bool injectPdids = false;
 
-        [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.Awake))]
+        [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.Start))]
         private static class DecorationInitialSetup
         {
             internal static void Postfix(ref DecorationItem __instance)
@@ -49,6 +49,8 @@
                 }
 
                 SCPMain.SetLayersToInteractiveProp(__instance);
+
+
                 /*
                 int s = 0;
 
@@ -94,7 +96,7 @@
                 }
                 */
                 //pl.Awake();
-                
+
             }
         }
 
@@ -131,6 +133,20 @@
                     //MelonLogger.Msg(CC.Yellow, "All renderers are static batched, disabling customization");
                     __instance.enabled = false;
                 }
+
+                if (__instance.TryGetComponent(out Placeable p))
+                {
+                    //MelonLogger.Msg(__instance.name);
+                    if (string.IsNullOrEmpty(p.m_Guid))
+                    {
+                        //MelonLogger.Msg("1");
+                        //MelonLogger.Msg("guid missing");
+                        p.Awake();
+                        //__instance.FinalizePlacementRecursive(true, true);
+                        //p.m_Guid = Guid.NewGuid().ToString();
+
+                    }
+                }
             }
         }
 
@@ -165,7 +181,6 @@
                 {
                     SCPMain.RelevantSetupForDecorationItem(__instance);
                 }
-
                 return true;
             }
         }
