@@ -101,10 +101,70 @@
         }
 
 
+        [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.InitializeInteraction))]
+        private static class TimedOutline
+        {
+            
+
+            public static Dictionary<int, object> coroutines = new();
+
+            internal static void Postfix(DecorationItem __instance)
+            {
+                if (Settings.options.outlineVisibility != 2) return;
+
+                int id = __instance.GetInstanceID();
+                if (coroutines.TryGetValue(id, out object? coroutine))
+                { 
+                    MelonCoroutines.Stop(coroutine);
+                }
+                coroutines[id] = MelonCoroutines.Start(DisableOutline(__instance));
+            }
+        }
+
+        public static IEnumerator DisableOutline(DecorationItem di)
+        {
+            yield return new WaitForSeconds(1.5f);
+
+            while (di.GetInstanceID() == GetDecorationIDUnderCrosshair())
+            {
+                if (!di || !GameManager.GetSafehouseManager().IsCustomizing()) yield break;
+
+                yield return new WaitForSeconds(1.5f);
+            }
+
+            ResetPropertyBlockOnRenderers(di.GetRenderers());
+
+            TimedOutline.coroutines.Remove(di.GetInstanceID());
+
+            yield break;
+        }
+
+        public static int GetDecorationIDUnderCrosshair()
+        {
+            /*
+            PlayerManager pm = GameManager.GetPlayerManagerComponent();
+
+            float maxPickupRange = GameManager.GetGlobalParameters().m_MaxPickupRange;
+            float maxRange = pm.ComputeModifiedPickupRange(maxPickupRange);
+            */
+            Ray ray = GameManager.GetMainCamera().ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 3f, (int)Utility.LayerMask.PossibleDecoration))
+            {
+                DecorationItem di = hit.collider.GetComponentInParent<DecorationItem>();
+                if (di)
+                {
+                    return di.GetInstanceID();
+                }
+            }
+            return 0;
+        }
+
+
         [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.OnStartCustomization))]
         private static class StartCustomizationOnItem
         {
-            internal static void Postfix(ref DecorationItem __instance)
+            internal static bool Prefix(ref DecorationItem __instance)
             {
                 //if (!__instance.isActiveAndEnabled) return;
 
@@ -147,6 +207,11 @@
 
                     }
                 }
+
+                __instance.RefreshInteractionSetup();
+
+                if (Settings.options.outlineVisibility > 0) return false;
+                else return true;
             }
         }
 

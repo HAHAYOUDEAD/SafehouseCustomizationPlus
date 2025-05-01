@@ -4,10 +4,19 @@ namespace SCPlus
 {
     internal static class Settings
     {
+        public static UISprite hueSliderThumb;
         public static void OnLoad()
         {
             Settings.options = new SCPSettings();
             Settings.options.AddToModSettings("Safehouse Customization Plus");
+            
+
+        }
+
+        public static void OnInitialize()
+        {
+            hueSliderThumb = InterfaceManager.GetPanel<Panel_OptionsMenu>().transform.Find("Pages/ModSettings/GameObject/ScrollPanel/Offset/Mod settings grid (Safehouse Customization Plus)/Custom Setting (Hue)/Slider_FOV/Slider_Options/Thumb").GetComponent<UISprite>();
+            hueSliderThumb.color = outlineColor.HueAdjust(Settings.options.outlineHue);
         }
 
         public static SCPSettings options;
@@ -52,6 +61,39 @@ namespace SCPlus
         [Slider(0.1f, 2f, 20)]
         public float autoWeightMultiplier = 1f;
 
+        [Section("Outline")]
+
+        [Name("Visibility")]
+        [Description("When to show outlines\n\nRe-enter customization mod to properly apply")]
+        [Choice(new string[]
+        {
+            "Vanilla",
+            "When close to player",  add sphere to player with custom component, OnTriggerEnter/Exit apply/remove outline
+            "When looked at",
+            "Disabled"
+        })]
+        public int outlineVisibility = 0;
+
+        [Name("Visibility distance")]
+        [Description("For distance based outline visibility. Lower values will make it feel like you bumping into stuff makes it glow")]
+        [Slider(0f, 16f, 33)]
+        public float outlineDistance = 3f;
+
+        [Name("Hue")]
+        [Description("Default: 0.61")]
+        [Slider(0f, 1f, 101, NumberFormat = "{0:0.00}")]
+        public float outlineHue = 0.61f;
+
+        [Name("Alpha")]
+        [Description("Default: 0.15")]
+        [Slider(0f, 1f, 21, NumberFormat = "{0:0.00}")]
+        public float outlineAlpha = 0.15f;
+
+        [Name("Thickness")]
+        [Description("Default: 4")]
+        [Slider(0f, 20f, 21)]
+        public float outlineThickness = 4f;
+
         [Section("Dev")]
         [Name("Enable developer inspect mode")]
         [Description("Sprint + RMB on any item to inpect, arrows to adjust position, +/- to zoom, 0 to take screenshot with object name")]
@@ -69,16 +111,36 @@ namespace SCPlus
 
         [Section("Cheats")]
         [Name("Duplicate")]
-        [Description("Duplicate decoration item under your crosshair")]
+        [Description("WARNING: not thoroughly tested, use at your own risk! \n\nDuplicate decoration item under your crosshair")]
         public KeyCode dupeKey = KeyCode.None;
 
         [Name("Ignore weight")]
         [Description("Ignore decoration weight while placing")]
         public bool ignorePlaceWeight = false;
 
+        protected override void OnChange(FieldInfo field, object oldValue, object newValue)
+        {
+            if (field.Name == nameof(outlineHue))
+            {
+                Settings.hueSliderThumb.color = outlineColor.HueAdjust((float)newValue);
+            }
+        }
+
         protected override void OnConfirm()
         {
             base.OnConfirm();
+
+            SafehouseManager sm = GameManager.GetSafehouseManager();
+
+            sm.m_OutlineColor = outlineColor.HueAdjust(Settings.options.outlineHue).AlphaAdjust(Settings.options.outlineAlpha);
+            sm.m_OnHoverColor = outlineColor.HueAdjust(Settings.options.outlineHue);
+
+            sm.m_OnHoverPropertyBlock.SetColor("_Color", sm.m_OnHoverColor);
+
+            sm.m_OutlineThickness = Settings.options.outlineThickness;
+
+            sm.DisableOutlineRendering();
+            sm.EnableOutlineRendering();
 
         }
     }

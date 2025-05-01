@@ -33,9 +33,65 @@ global using SceneManager = UnityEngine.SceneManagement.SceneManager;
 using Il2CppTLD.ModularElectrolizer;
 using System.Diagnostics;
 using System.IO.Compression;
+using UnityEngine.Rendering;
 
 namespace SCPlus
 {
+    public static class Extensions
+    {
+        public static string GetGuid(this Container c)
+        {
+            if (c.GetComponent<ObjectGuid>()) return c.GetComponent<ObjectGuid>().PDID;
+            //if (c.GetComponentInParent<ObjectGuid>()) return c.GetComponentInParent<ObjectGuid>().PDID;
+            return missingGuid;
+        }
+
+        public static string JsonDumpSkipDefaults<T>(this T obj) // thanks GPT
+        {
+            if (obj == null) return "null";
+
+            var type = typeof(T);
+            var properties = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.Append('{');
+
+            bool firstProperty = true;
+
+            jsonBuilder.Append($"\"@type\":{JSON.Dump(type.FullName)},");
+
+            foreach (var prop in properties)
+            {
+                object value = prop.GetValue(obj);
+                object defaultValue = prop.FieldType.GetDefaultValue();
+
+                // Skip default values and empyt strings
+                if (value == null || value.Equals(defaultValue)) continue;
+                if (prop.FieldType == typeof(string) && value.Equals(string.Empty)) continue;
+
+                if (!firstProperty) jsonBuilder.Append(',');
+                firstProperty = false;
+
+                jsonBuilder.Append($"\"{prop.Name}\":{JSON.Dump(value)}");
+            }
+
+            jsonBuilder.Append('}');
+            return jsonBuilder.ToString();
+        }
+
+        private static object GetDefaultValue(this Type t) => t.IsValueType ? Activator.CreateInstance(t) : null;
+
+        public static Color HueAdjust(this Color c, float hue)
+        {
+            Color.RGBToHSV(c, out float h, out float s, out float v);
+            return Color.HSVToRGB(hue, s, v);
+        }
+
+        public static Color AlphaAdjust(this Color c, float alpha)
+        {
+            return new Color(c.r, c.g, c.b, alpha);
+        }
+
+    }
     internal static class Utility
     {
         public const string modVersion = "1.8.3";
@@ -59,7 +115,24 @@ namespace SCPlus
 
         public static int childrenLookupCoroutineRunning = 0;
 
+        public static readonly Color outlineColor = new Color(0.25f, 0.5f, 1f);
 
+
+        public enum LayerMask
+        {
+            Default = 1,
+            PossibleDecoration = 786945, // Default, TerrainObject, Container, InteractiveProp
+
+        }
+
+
+        public static void Log(ConsoleColor color, string message)
+        {
+            if (Settings.options.debugLog)
+            {
+                Melon<SCPMain>.Logger.Msg(color, message);
+            }
+        }
         public static bool IsScenePlayable()
         {
             return !(string.IsNullOrEmpty(GameManager.m_ActiveScene) || GameManager.m_ActiveScene.Contains("MainMenu") || GameManager.m_ActiveScene == "Boot" || GameManager.m_ActiveScene == "Empty");
@@ -74,6 +147,23 @@ namespace SCPlus
         {
             return !string.IsNullOrEmpty(scene) && scene.Contains("MainMenu");
         }
+
+        public static string? LoadEmbeddedJSON(string name)
+        {
+            name = resourcesFolder + name;
+
+            string? result = null;
+
+            Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
+            if (stream != null)
+            {
+                StreamReader reader = new StreamReader(stream);
+                result = reader.ReadToEnd();
+            }
+
+            return result;
+        }
+
 
         public static GameObject GetInteractiveGameObjectUnderCrosshair()
         {
@@ -104,17 +194,8 @@ namespace SCPlus
             }
 
             Ray ray = GameManager.GetMainCamera().ScreenPointToRay(Input.mousePosition);
-            int layerMask = 0;// Physics.AllLayers;
 
-            //layerMask ^= (1 << layerToExclude);
-            //layerMask |= (1 << layerToInclude);
-
-            layerMask |= (1 << vp_Layer.Default);
-            layerMask |= (1 << vp_Layer.InteractiveProp);
-            layerMask |= (1 << vp_Layer.Container);
-            layerMask |= (1 << vp_Layer.TerrainObject);
-
-            if (Physics.Raycast(ray, out RaycastHit hit, maxRange, layerMask))
+            if (Physics.Raycast(ray, out RaycastHit hit, maxRange, (int)LayerMask.PossibleDecoration))
             {
                 GameObject hitGo = GetRealParent(hit.transform);
                 if (hitGo.name.StartsWith("ARC_"))
@@ -130,7 +211,7 @@ namespace SCPlus
                         return null;
                     }
                 }
-                //HUDMessage.AddMessage("Hit: " + GetRealParent(hit.transform)?.name);
+
                 return hitGo;
             }
             else
@@ -139,53 +220,7 @@ namespace SCPlus
                 return null;
             }
         }
-        /*
-        public static string testtest(Vector3 v)
-        { 
-            return v.ToJsonSkipDefaults();
-        }
 
-        public static string testtsdvest(CarryableSaveDataProxy v)
-        {
-            return v.ToJsonSkipDefaults();
-        }
-        */
-        public static string JsonDumpSkipDefaults<T>(this T obj) // thanks GPT
-        {
-            if (obj == null) return "null";
-
-            var type = typeof(T);
-            var properties = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
-            StringBuilder jsonBuilder = new StringBuilder();
-            jsonBuilder.Append('{');
-
-            bool firstProperty = true;
-
-            jsonBuilder.Append($"\"@type\":{JSON.Dump(type.FullName)},");
-
-            foreach (var prop in properties)
-            {
-                object value = prop.GetValue(obj);
-                object defaultValue = GetDefaultValue(prop.FieldType);
-
-                // Skip default values and empyt strings
-                if (value == null || value.Equals(defaultValue)) continue;
-                if (prop.FieldType == typeof(string) && value.Equals(string.Empty)) continue;
-
-                if (!firstProperty) jsonBuilder.Append(',');
-                firstProperty = false;
-
-                jsonBuilder.Append($"\"{prop.Name}\":{JSON.Dump(value)}");
-            }
-
-            jsonBuilder.Append('}');
-            return jsonBuilder.ToString();
-        }
-
-        private static object GetDefaultValue(Type t)
-        {
-            return t.IsValueType ? Activator.CreateInstance(t) : null;
-        }
 
         public static Guid GenerateSeededGuid(int seed)
         {
@@ -200,23 +235,6 @@ namespace SCPlus
         public static int SeedFromCoords(Vector3 v)
         {
             int result = Mathf.CeilToInt(v.x * v.z + v.y * 10000f);
-
-            return result;
-        }
-
-        public static string? LoadEmbeddedJSON(string name)
-        {
-            name = resourcesFolder + name;
-
-            string? result = null;
-
-            //MemoryStream memoryStream;
-            Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
-            if (stream != null)
-            {
-                StreamReader reader = new StreamReader(stream);
-                result = reader.ReadToEnd();
-            }
 
             return result;
         }
@@ -248,122 +266,6 @@ namespace SCPlus
             return true;
         }
 
-        // stolen from Remove Clutter
-        internal static HashSet<GameObject> GetRootParents()
-        {
-            Stopwatch stopwatch3 = Stopwatch.StartNew();
-
-            HashSet<GameObject> rootObj = new();
-
-            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
-            {
-                Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
-
-                GameObject[] sceneObj = scene.GetRootGameObjects();
-
-                foreach (GameObject obj in sceneObj)
-                {
-                    bool flag = obj.IsNullOrDestroyed() ||
-                        obj.transform.childCount == 0 ||
-                        obj.active == false ||
-                        obj.name.StartsWith("SCRIPT_") ||
-                        obj.name.StartsWith("CORPSE_") ||
-                        obj.name.StartsWith("GEAR_") ||
-                        obj.name.StartsWith("Vehicles") ||
-                        obj.name.StartsWith("INTERACTIVE_") ||
-                        obj.name.StartsWith("FleePoints") ||
-                        obj.name.StartsWith("Wildlife");
-                    if (flag) continue;
-                    rootObj.Add(obj);
-                }
-            }
-
-            stopwatch3.Stop();
-            Log(CC.Yellow, $"SC+ Root objects lookup time: {stopwatch3.ElapsedMilliseconds}  ms");
-
-            return rootObj;
-        }
-
-        // stolen from Remove Clutter
-        internal static void GetChildrenWithName(GameObject obj, string name, HashSet<GameObject> result)
-        {
-            if (obj.transform.childCount > 0)
-            {
-                for (int i = 0; i < obj.transform.childCount; i++)
-                {
-                    SCPMain.carryableCoroutineCounter++;
-
-                    GameObject child = obj.transform.GetChild(i).gameObject;
-
-
-                    if (child.name.ToLower().Contains(name.ToLower()))
-                    {
-                        result.Add(child);
-
-                        continue;
-                    }
-
-                    bool flag = child.name.ToLower().StartsWith("tree") ||
-                        child.name.ToLower().StartsWith("rock") ||
-                        child.name.ToLower().StartsWith("terrain") ||
-                        child.name.ToLower().StartsWith("cliff") ||
-                        child.name.ToLower().StartsWith("gear_") ||
-                        child.name.ToLower().StartsWith("light") && !child.name.ToLower().StartsWith("lighth") ||
-                        child.name.ToLower().StartsWith("newlight") ||
-                        //child.name.ToLower().Contains("travois") ||
-                        child.name.ToLower().StartsWith("water");
-                    if (flag) continue;
-
-                    GetChildrenWithName(child, name, result);
-                }
-            }
-        }
-
-
-        internal static IEnumerator GetChildrenWithNameEnum(GameObject obj, string name, HashSet<GameObject> result)
-        {
-            childrenLookupCoroutineRunning++;
-            if (obj.transform.childCount > 0)
-            {
-                for (int i = 0; i < obj.transform.childCount; i++)
-                {
-                    SCPMain.carryableCoroutineCounter++;
-
-                    GameObject child = obj.transform.GetChild(i).gameObject;
-                    
-
-                    if (child.name.ToLower().Contains(name.ToLower()))
-                    {
-                        result.Add(child);
-
-                        continue;
-                    }
-
-                    bool flag = child.name.ToLower().StartsWith("tree") ||
-                        child.name.ToLower().StartsWith("rock") ||
-                        child.name.ToLower().StartsWith("terrain") ||
-                        child.name.ToLower().StartsWith("cliff") ||
-                        child.name.ToLower().StartsWith("gear_") ||
-                        child.name.ToLower().StartsWith("light") && !child.name.ToLower().StartsWith("lighth") ||
-                        child.name.ToLower().StartsWith("newlight") ||
-                        child.name.ToLower().StartsWith("water");
-                    if (flag) continue;
-
-                    if (SCPMain.carryableCoroutineCounter > Settings.options.carryableProcessingInterval)
-                    {
-                        SCPMain.carryableCoroutineCounter = 0;
-                        //Log(CC.Gray, "Frame skip");
-                        yield return new WaitForEndOfFrame();
-                        yield return new WaitForEndOfFrame();
-                    }
-                    MelonCoroutines.Start(GetChildrenWithNameEnum(child, name, result));
-                }
-            }
-            childrenLookupCoroutineRunning--;
-            yield break;
-        }
-
-
         public static GameObject GetRealParent(Transform t)
         {
             while (t.parent
@@ -371,31 +273,13 @@ namespace SCPlus
                 && t.parent.name.Contains("_")
                 && !t.parent.GetComponent<RadialObjectSpawner>())
             {
-                //MelonLogger.Msg($"< {t.name}");
                 t = t.parent;
             }
-            /*
-            while (t.parent && t.parent.name.Contains("_"))
-            {
-                t = t.parent;
-            }
-            */
-
             return t.gameObject;
         }
 
         public static LocalizedString TryGetLocalizedName(GameObject go)
         {
-            //LocalizedString ls;
-
-
-
-
-            // get defaulthovertext from baseinteraction
-            //Il2CppSystem.Ty
-
-
-
             string name = SanitizeObjectName(go.name);
             if (CarryableData.decorationOverrideData.ContainsKey(name))
             {
@@ -404,7 +288,6 @@ namespace SCPlus
                 {
                     return new LocalizedString() { m_LocalizationID = locID };
                 }
-
             }
 
             BaseInteraction bi = go.GetComponentInChildren<BaseInteraction>();
@@ -427,10 +310,6 @@ namespace SCPlus
                 if (s[s.Length - 1].Length < 2) name = name[..^2];
             }
             return new LocalizedString() { m_LocalizationID = name };
-            //    if (go.GetComponentInChildren<WoodStove>()) ;
-            //if (go.GetComponentInChildren<BaseInteraction>())
-
-
         }
 
         public static string SanitizeObjectName(string s)
@@ -441,30 +320,13 @@ namespace SCPlus
             return s;
         }
 
-        public static void Log(ConsoleColor color, string message)
-        {
-            if (Settings.options.debugLog)
-            {
-               Melon<SCPMain>.Logger.Msg(color, message);
-            }
-        }
-
         public static string TryGetGuid(GameObject go)
         {
             ObjectGuid og = GetRealParent(go.transform).GetComponentInChildren<ObjectGuid>();
             return og ? og.GetPDID() : "";
         }
 
-
-        public static string GetGuid(this Container c)
-        {
-            if (c.GetComponent<ObjectGuid>()) return c.GetComponent<ObjectGuid>().PDID;
-            //if (c.GetComponentInParent<ObjectGuid>()) return c.GetComponentInParent<ObjectGuid>().PDID;
-            return missingGuid;
-        }
-
-
-        public static Scene[] LoadedScenes()
+        public static Scene[] GetLoadedScenes()
         {
             int countLoaded = UnityEngine.SceneManagement.SceneManager.sceneCount;
             Scene[] loadedScenes = new Scene[countLoaded];
@@ -503,40 +365,6 @@ namespace SCPlus
             }
         }
 
-        public static IEnumerator PrepareMillingMachine(GameObject go)
-        {
-            go.name = "INTERACTIVE_IndustrialMillingMachine";
-            SimpleInteraction si = go.AddComponent<SimpleInteraction>();
-            si.m_DefaultHoverText = new LocalizedString() { m_LocalizationID = "GAMEPLAY_MillingMachine" };
-
-            MillingMachine mm = go.AddComponent<MillingMachine>();
-            mm.m_IdleAudioPlay = "Play_MillingMachine";
-            mm.m_IdleAudioStop = "Stop_MillingMachine";
-            mm.m_RepairAudioLoop = "Play_MillingMachineRepair";
-
-            Action action = () => mm.InitializeInteraction(si);
-            InvokableCall invokable = new InvokableCall(action);
-            si.FindOrAddEventForEventType(InteractionEventType.InitializeInteraction).AddCall(invokable);
-            si.FindOrAddEventForEventType(InteractionEventType.InitializeInteraction).m_Calls.AddListener(invokable);
-
-            action = () => mm.PerformInteraction();
-            invokable = new InvokableCall(action);
-            si.FindOrAddEventForEventType(InteractionEventType.PerformInteraction).AddCall(invokable);
-            si.FindOrAddEventForEventType(InteractionEventType.PerformInteraction).m_Calls.AddListener(invokable);
-
-            yield return new WaitForEndOfFrame();
-
-            mm.InitializeInteraction(si);
-
-            AuroraModularElectrolizer ame = go.GetComponent<AuroraModularElectrolizer>();
-            if (ame)
-            {
-                ame.Initialize();
-                ame.InitializeFlickerSet();
-                ame.Awake();
-            }
-            yield break;
-        }
 
         public static bool CurrentlyInNativeScene(SCPlusCarryable sc) => SceneManager.GetAllScenes().Contains(SceneManager.GetSceneByName(sc.nativeScene));
         public static bool CurrentlyInNativeScene(string native) => SceneManager.GetAllScenes().Contains(SceneManager.GetSceneByName(native));
@@ -562,5 +390,103 @@ namespace SCPlus
 
             return oa;
         }
+
+        public static bool FindRoughlyAtPosition(string targetName, Vector3 position, float radius, out GameObject? go)
+        {
+            Collider[] hits = Physics.OverlapSphere(position, radius, (int)LayerMask.PossibleDecoration);
+
+            foreach (var hit in hits)
+            {
+                ///MelonLogger.Msg(hit.transform.name);
+                GameObject parent = GetRealParent(hit.transform);
+
+                if (SanitizeObjectName(parent.name).ToLower().Contains(targetName.ToLower()))
+                {
+                    //MelonLogger.Msg(parent.name + " contains " + targetName);
+                    go = parent;
+                    return true;
+                }
+            }
+            go = null;
+            return false;
+        }
+
+
+
+        /*
+        [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
+        private static class dfhdfghg
+        {
+            internal static void Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, MaterialPropertyBlock propertyBlock)
+            {
+                if (renderers.Count > 0) PrintShaderProperties(renderers[0].material, propertyBlock);
+            }
+        }
+
+
+        
+        public static void PrintShaderProperties(Material mat, MaterialPropertyBlock mpb)
+        {
+            Shader shader = mat.shader;
+            int count = shader.GetPropertyCount();
+
+            Log(CC.Yellow, $"\nShader: {shader.name}, Property count: {count}");
+
+            for (int i = 0; i < count; i++)
+            {
+                string name = shader.GetPropertyName(i);
+                ShaderPropertyType type = shader.GetPropertyType(i);
+
+                string valueStr = "Unknown";
+                string mpbValueStr = "Unknown";
+
+                switch (type)
+                {
+                    case ShaderPropertyType.Color:
+                        valueStr = mat.GetColor(name).ToString();
+                        mpbValueStr = mpb.GetColor(name).ToString();
+                        break;
+                    case ShaderPropertyType.Vector:
+                        valueStr = mat.GetVector(name).ToString();
+                        mpbValueStr = mpb.GetVector(name).ToString();
+                        break;
+                    case ShaderPropertyType.Float:
+                    case ShaderPropertyType.Range:
+                        valueStr = mat.GetFloat(name).ToString();
+                        mpbValueStr = mpb.GetFloat(name).ToString();
+                        break;
+                    case ShaderPropertyType.Texture:
+                        Texture tex = mat.GetTexture(name);
+                        Texture mpbtex = mpb.GetTexture(name);
+                        valueStr = tex ? tex.name : "None";
+                        mpbValueStr = mpbtex ? mpbtex.name : "None";
+                        break;
+                }
+
+                Log(CC.Gray, $"Property {i}: {name} ({type}) = {valueStr}");
+                Log(CC.White, $"    Property {i}: {name} ({type}) = {mpbValueStr}");
+            }
+
+            for (int n = -5; n < 400; n++)
+            {
+                if (mpb.HasColor(n))
+                {
+                    Log(CC.Green, $"Found Color property #{n}: {mpb.GetColor(n)}");
+                }
+                if (mpb.HasFloat(n))
+                {
+                    Log(CC.Green, $"Found Float property #{n}: {mpb.GetFloat(n)}");
+                }
+                if (mpb.HasVector(n))
+                {
+                    Log(CC.Green, $"Found Vector property #{n}: {mpb.GetVector(n)}");
+                }
+                if (mpb.HasBuffer(n))
+                {
+                    Log(CC.Green, $"Found Buffer property #{n}");
+                }
+            }
+        }
+    }*/
     }
 }

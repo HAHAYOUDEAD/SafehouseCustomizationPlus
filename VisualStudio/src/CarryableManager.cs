@@ -81,9 +81,9 @@
             {
                 foreach (var s in relevantData.Where(i => i != relevantData.Last()))
                 {
-                    jsonArray.Append(Utility.JsonDumpSkipDefaults(s) + ',');
+                    jsonArray.Append(Extensions.JsonDumpSkipDefaults(s) + ',');
                 }
-                jsonArray.Append(Utility.JsonDumpSkipDefaults(relevantData.Last()));
+                jsonArray.Append(Extensions.JsonDumpSkipDefaults(relevantData.Last()));
             }
             jsonArray.Append(']');
 

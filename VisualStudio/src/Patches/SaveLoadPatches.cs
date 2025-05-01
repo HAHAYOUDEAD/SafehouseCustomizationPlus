@@ -1,6 +1,8 @@
 ﻿using UnityEngine.ResourceManagement.ResourceLocations;
 using System.Diagnostics;
 using Il2CppTLD.BigCarry;
+using static Il2Cppgw.gql.Interpreter;
+using Il2CppNodeCanvas.Tasks.Actions;
 
 namespace SCPlus
 {
@@ -67,6 +69,21 @@ namespace SCPlus
             }
         }
 
+        [HarmonyPatch(typeof(Container), nameof(Container.Awake))]
+        private static class MakeContainersMovable
+        {
+            internal static void Postfix(ref Container __instance)
+            {
+                string name = SanitizeObjectName(__instance.name);
+                if (CarryableData.carryablePrefabDefinition.ContainsKey(name))
+                {
+                    GameObject parent = GetRealParent(__instance.transform);
+                    MelonLogger.Msg(parent.name);
+
+                    SCPMain.MakeIntoDecoration(parent);
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.LoadSceneData))]
         private static class MakeStuffMovable
@@ -74,6 +91,9 @@ namespace SCPlus
             internal static void Postfix(ref string sceneSaveName)
             {
 
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Log(CC.Red, $"SC+ Loading started");
 
 
                 string? serializedSaveData = dataManager.Load(movablesSaveDataTag + "_" + sceneSaveName);
@@ -122,122 +142,57 @@ namespace SCPlus
 
                 dataList = dataList.Concat(addDataList).ToList();
 
-                //Log(CC.Yellow, $"SC+ Data parse time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
-                //lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
 
-                // making objects movable and loading positions if was moved inside same scene
-
-
-
-
-
-
-                //MelonCoroutines.Start(SCPMain.ProcessCarryables(dataList, Settings.options.carryableProcessingInterval));
-
-
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                Stopwatch stopwatch2 = Stopwatch.StartNew();
-                int lastOperationTookTime = 0;
-
-                Log(CC.Red, $"SC+ Loading started");
-
-                foreach (GameObject rootGo in GetRootParents())
+                // if was manipulated, find in scene and disable
+                foreach (var data in dataList)
                 {
-                    HashSet<GameObject> result = new();
-
-                    foreach (var entry in CarryableData.carryablePrefabDefinition)
+                    if (data.nativeScene == sceneSaveName)
                     {
-                        //MelonCoroutines.Start(GetChildrenWithNameEnum(rootGo, entry.Key, result));
-                        GetChildrenWithName(rootGo, entry.Key, result);
-                        /*
-                        if (carryableCoroutineCounter > cutoff)
-                        {
-                            carryableCoroutineCounter = 0;
-                            //Log("Frame skip");
-                            yield return new WaitForEndOfFrame();
-                        }
-                        */
-                    }
-
-
-                    Log(CC.Yellow, $"SC+ Children of {rootGo.name} lookup time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
-                    lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
-
-                    foreach (GameObject child in result)
-                    {
-
-
-                        if (child.IsNullOrDestroyed() || !child.active) continue;
-
-                        DecorationItem di = SCPMain.MakeIntoDecoration(child);
-
-                        if (dataList.Count == 0) continue;
-
-                        for (int i = dataList.Count - 1; i >= 0; i--)
-                        {
-                            var data = dataList[i];
-
-                            CarryableData.carryablePrefabDefinition.TryGetValue(data.name, out ObjectToModify? otm);
-
-                            if (child.name.Contains(data.name))
-                            {
-                                // object still in native scene
-                                if (data.IsInNativeScene() && ((data.state & CS.Removed) == 0)) //  && !data.TryGetContaier() 
-                                {
-                                    if (WithinDistance(data.originalPos, child.transform.position))
-                                    {
-                                        if (otm != null && otm.alwaysReplaceAfterFirstInteraction)
-                                        {
-                                            Log(CC.DarkCyan, $"In native scene, force removed {data.name} native: {data.nativeScene} current: {data.currentScene}");
-                                            child.active = false;
-                                            continue;
-                                        }
-                                        // in native scene and in container
-                                        if (di && ((data.state & CS.InContainer) == CS.InContainer))
-                                        {
-                                            Log(CC.DarkCyan, $"In native scene, in container {data.name} native: {data.nativeScene} current: {data.currentScene}");
-                                            data.TryGetContainer().AddDecorationItem(di);
-                                        }
-                                        else
-                                        {
-                                            Log(CC.DarkCyan, $"In native scene, moved {data.name} native: {data.nativeScene} current: {data.currentScene}");
-                                        }
-
-                                        SCPlusCarryable c = child.AddComponent<SCPlusCarryable>();
-                                        CarryableManager.Add(c);
-                                        c.FromProxy(data, true, true);
-                                        dataList.RemoveAt(i);
-                                    }
-                                }
-                                // object no longer in native scene, but player is
-                                else if (CurrentlyInNativeScene(data.nativeScene))
-                                {
-                                    if (WithinDistance(data.originalPos, child.transform.position))
-                                    {
-                                        if ((data.state & CS.OnPlayer) == 0) // native object moved out of scene
-                                        {
-                                            if (!child.GetComponent<SCPlusCarryable>())
-                                            {
-                                                SCPlusCarryable c = child.AddComponent<SCPlusCarryable>();
-                                                c.FromProxy(data, true, false, true);
-                                                CarryableManager.Add(c);
-                                                Log(CC.DarkYellow, $"Not in native scene or disabled, removed and enlisted {data.name} native: {data.nativeScene} current: {data.currentScene}");
-                                            }
-                                            else
-                                            {
-                                                Log(CC.DarkMagenta, $"Not in native scene or disabled, removed {data.name} native: {data.nativeScene} current: {data.currentScene}");
-                                            }
-
-                                            child.active = false;
-                                            dataList.RemoveAt(i);
-                                        }
-                                    }
-                                }
-                            }
+                        if (FindRoughlyAtPosition(data.name, data.originalPos, 1f, out GameObject? go)) 
+                        { 
+                            go.active = false;
                         }
                     }
-                    Log(CC.Green, $"SC+ Children of {rootGo.name} operations time: {stopwatch.ElapsedMilliseconds - lastOperationTookTime} ms");
-                    lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
+                }
+
+                Scene currentScene = SceneManager.GetActiveScene();
+
+                // find in scene and make into decoration
+                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
+                {
+                    GameObject parent = GetRealParent(found.transform);
+                    //MelonLogger.Msg(parent.name);
+                    SCPMain.MakeIntoDecoration(parent);
+                }
+
+                foreach (var found in FindObjectsOfTypeInScene<MillingMachine>(currentScene))
+                {
+                    GameObject parent = GetRealParent(found.transform);
+                    //MelonLogger.Msg(parent.name);
+                    SCPMain.MakeIntoDecoration(parent);
+                }
+
+                foreach (var found in FindObjectsOfTypeInScene<AmmoWorkBench>(currentScene))
+                {
+                    GameObject parent = GetRealParent(found.transform);
+                    //MelonLogger.Msg(parent.name);
+                    SCPMain.MakeIntoDecoration(parent);
+                }
+
+                if (SCPMain.hasTFTFTF)
+                {
+                    //MelonLogger.Msg(CC.Blue, "TFTFTF detected");
+                    currentScene = SceneManager.GetSceneByName(currentScene.name + "_DLC01");
+                    if (currentScene.IsValid())
+                    {
+                        //MelonLogger.Msg(CC.Blue, currentScene.name);
+                        foreach (var found in FindObjectsOfTypeInScene<TraderRadio>(currentScene))
+                        {
+                            GameObject parent = GetRealParent(found.transform);
+                            //MelonLogger.Msg(parent.name);
+                            SCPMain.MakeIntoDecoration(parent);
+                        }
+                    }
                 }
 
                 stopwatch.Stop();
@@ -247,13 +202,12 @@ namespace SCPlus
 
                 stopwatch.Restart();
 
-                //SCPMain.instantiatingCarryables = true;
+                SCPMain.instantiatingCarryables = true;
                 GameObject globalParent = new GameObject("CarryableTemp");
                 globalParent.SetActive(false);
-                // instantiating remaining objects: in inventory, containers or different scene
+
                 foreach (var data in dataList)
                 {
-                    //MelonLogger.Msg(CC.Red, $"{data.name}");
                     CarryableData.carryablePrefabDefinition.TryGetValue(data.name, out ObjectToModify? otm);
                     if (otm == null) continue;
 
@@ -277,6 +231,7 @@ namespace SCPlus
                             MelonCoroutines.Start(PrepareMillingMachine(instance));
 
                             break;
+
                         default:
                             break;
                     }
@@ -302,7 +257,7 @@ namespace SCPlus
                             data.TryGetContainer().AddDecorationItem(di);
                             instance.SetActive(false);
                         }
-                        else //if (!data.IsInNativeScene() && GameManager.CompareSceneNames(GameManager.m_ActiveScene, data.currentScene)) // in different scene, or same scene but spawned additionally with console
+                        else //if (!data.IsInNativeScene() && GameManager.CompareSceneNames(GameManager.m_ActiveScene, data.currentScene)) // in scene
                         {
                             Log(CC.Gray, $"Instantiating object in world | {data.name} native: {data.nativeScene} current: {data.currentScene}");
                             GameObject root = PlaceableManager.FindOrCreateCategoryRoot();
@@ -321,35 +276,13 @@ namespace SCPlus
                     }
                 }
                 GameObject.Destroy(globalParent);
-
+                SCPMain.instantiatingCarryables = false;
 
                 stopwatch.Stop();
-                stopwatch2.Stop();
                 Log(CC.Red, $"SC+ Loading pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
-                Log(CC.Red, $"SC+ Total loading: {stopwatch2.ElapsedMilliseconds} ms ({stopwatch2.ElapsedTicks} ticks)");
-
             }
 
 
         }
-
-
-
-        /*
-        [HarmonyPatch(typeof(AssetHelper), nameof(AssetHelper.InstantiateAssetAsync))]
-        private static class testtest
-        {
-            internal static void Prefix(ref IResourceLocation resourceLocation)
-            { 
-                string line = "failed";
-                if (resourceLocation != null)
-                {
-                    line = $"Key: {resourceLocation.PrimaryKey} | InternalID: {resourceLocation.InternalId}";
-                }
-                MelonLogger.Msg(resourceLocation != null ? CC.Blue : CC.Red, line);
-            }
-        }
-        */
     }
-   
 }

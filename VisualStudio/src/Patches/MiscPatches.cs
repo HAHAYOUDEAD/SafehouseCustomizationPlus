@@ -7,16 +7,38 @@ namespace SCPlus
     internal class MiscPatches
     {
         /*
-        [HarmonyPatch(typeof(Addressables), nameof(Addressables.LoadContentCatalogAsync), [typeof(string), typeof(string)])]
+        [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
         private static class dfhdfghg
         {
-            internal static void Prefix(ref string catalogPath)
+            internal static void Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, MaterialPropertyBlock propertyBlock)
             {
-                MelonLogger.Msg(CC.Magenta, "Loading catalog: " + catalogPath);
+                //if (renderers.Count > 0) PrintShaderProperties(renderers[0].material, propertyBlock);
+                if (renderers.Count > 0) 
+                {
+                    MelonLogger.Msg("ApplyPropertyBlockToRenderers");
+
+                }
             }
-        }  
+        }
         */
-        
+
+
+
+        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.Awake))]
+        private static class OutlineThings
+        {
+            internal static void Postfix(ref SafehouseManager __instance)
+            {
+                __instance.m_OutlineColor = outlineColor.HueAdjust(Settings.options.outlineHue).AlphaAdjust(Settings.options.outlineAlpha);
+                __instance.m_OnHoverColor = outlineColor.HueAdjust(Settings.options.outlineHue);
+
+                __instance.m_OnHoverPropertyBlock.SetColor("_Color", __instance.m_OnHoverColor);
+
+                __instance.m_OutlineThickness = Settings.options.outlineThickness;
+            }
+        }
+
+
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
         private static class AlwaysCustomizable
         {
