@@ -1,4 +1,5 @@
 ﻿using ModSettings;
+using System.Runtime.CompilerServices;
 
 namespace SCPlus
 {
@@ -17,6 +18,20 @@ namespace SCPlus
         {
             hueSliderThumb = InterfaceManager.GetPanel<Panel_OptionsMenu>().transform.Find("Pages/ModSettings/GameObject/ScrollPanel/Offset/Mod settings grid (Safehouse Customization Plus)/Custom Setting (Hue)/Slider_FOV/Slider_Options/Thumb").GetComponent<UISprite>();
             hueSliderThumb.color = outlineColor.HueAdjust(Settings.options.outlineHue);
+            ShowDistance(Settings.options.outlineVisibility == 1);
+            ShowOutline(Settings.options.outlineVisibility != 3);
+        }
+
+        internal static void ShowDistance(bool visible)
+        {
+            options.SetFieldVisible(nameof(options.outlineDistance), visible);
+        }
+
+        internal static void ShowOutline(bool visible)
+        {
+            options.SetFieldVisible(nameof(options.outlineHue), visible);
+            options.SetFieldVisible(nameof(options.outlineAlpha), visible);
+            options.SetFieldVisible(nameof(options.outlineThickness), visible);
         }
 
         public static SCPSettings options;
@@ -68,7 +83,7 @@ namespace SCPlus
         [Choice(new string[]
         {
             "Vanilla",
-            "When close to player",  add sphere to player with custom component, OnTriggerEnter/Exit apply/remove outline
+            "When close to player", 
             "When looked at",
             "Disabled"
         })]
@@ -124,6 +139,12 @@ namespace SCPlus
             {
                 Settings.hueSliderThumb.color = outlineColor.HueAdjust((float)newValue);
             }
+
+            if (field.Name == nameof(outlineVisibility))
+            {
+                Settings.ShowDistance((int)newValue == 1);
+                Settings.ShowOutline((int)newValue != 3);
+            }
         }
 
         protected override void OnConfirm()
@@ -141,7 +162,25 @@ namespace SCPlus
 
             sm.DisableOutlineRendering();
             sm.EnableOutlineRendering();
+            
 
+            if (GameManager.GetSafehouseManager().IsCustomizing())
+            {
+                //sm.StartCustomizing();
+
+                if (Settings.options.outlineVisibility == 1)
+                {
+                    SCPlusDecorationDetector comp = GameManager.GetPlayerTransform().gameObject.GetOrAddComponent<SCPlusDecorationDetector>();
+                    if (comp.cc != null) comp.cc.radius = Settings.options.outlineDistance;
+                }
+                else
+                {
+                    if (GameManager.GetPlayerTransform().TryGetComponent(out SCPlusDecorationDetector detector))
+                    {
+                        GameObject.Destroy(detector);
+                    }
+                }
+            }
         }
     }
 }

@@ -84,6 +84,83 @@ namespace SCPlus
             }
         }
 
+        public override void OnSceneWasInitialized(int buildIndex, string sceneName)
+        {
+            if (!IsScenePlayable()) return;
+
+            Scene currentScene = SceneManager.GetSceneByName(sceneName);
+
+            if (sceneName.EndsWith("_SANDBOX"))
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+                foreach (var found in FindObjectsOfTypeInScene<MillingMachine>(currentScene))
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+
+                foreach (var found in FindObjectsOfTypeInScene<AmmoWorkBench>(currentScene))
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+
+                foreach (var found in FindObjectsOfTypeInScene<ObjectAnim>(currentScene)) // containers
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+                stopwatch.Stop();
+                Log(CC.Blue, $"SC+ Lookup pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+            }
+            else if (sceneName.EndsWith("_DLC01"))
+            {
+                foreach (var found in FindObjectsOfTypeInScene<TraderRadio>(currentScene))
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+            }
+            else if (!sceneName.Contains("_"))
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root);
+                    }
+                }
+
+                stopwatch.Stop();
+                Log(CC.Blue, $"SC+ Lookup pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+            }
+
+
+
+
+
+
+
+        }
+
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
             DecorationPatches.injectPdids = true;
@@ -306,15 +383,12 @@ namespace SCPlus
                 di.GetDecorationPrefab();
                 di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
                 di.GetCraftingDisplayName();
+                di.m_PlacementRules = genericPlacementRules;
                 //di.m_IconReference = new("");
 
                 RelevantSetupForDecorationItem(di);
                 //MelonLogger.Msg(CC.Blue, $"Decoration item {di.name} created with icon {di.m_IconReference.RuntimeKey.ToString()}");
-                if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable == false)
-                { 
-                    //MelonLogger.Msg(CC.Red, $"Decoration item {di.name} is not pickupable");
-                    di.m_AllowInInventory = false;
-                }
+
                 if (!GameManager.GetSafehouseManager().IsCustomizing()) RestoreNormalInteraction(di);
 
                 return di;
@@ -349,11 +423,19 @@ namespace SCPlus
                 if (!GameManager.GetSafehouseManager().IsCustomizing()) return;
 
                 GameObject go = GetInteractiveGameObjectUnderCrosshair();
-                DecorationItem di = go?.GetComponent<DecorationItem>();
-                if (di)
+                DecorationItem? di = go?.GetComponent<DecorationItem>();
+                if (di != null)
                 {
+                    string name = SanitizeObjectName(di.name);
+
+                    if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable == false)
+                    {
+                        GameAudioManager.PlayGUIError();
+                        HUDMessage.AddMessage(Localization.Get("SCP_Action_CantDuplicate"), false, true);
+                        return;
+                    }
                     GameObject dupe = GameObject.Instantiate(go);
-                    dupe.name = SanitizeObjectName(dupe.name);
+                    dupe.name = name;
                     GameManager.GetPlayerManagerComponent().StartPlaceMesh(dupe, PlaceMeshFlags.DestroyOnCancel, di.m_PlacementRules);
                     justDupedContainer = true;
                 }

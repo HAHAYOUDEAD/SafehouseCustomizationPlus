@@ -4,7 +4,7 @@
     {
 
 
-        [HarmonyPatch(typeof(ConsoleManager), "Initialize")]
+        [HarmonyPatch(typeof(ConsoleManager), nameof(ConsoleManager.Initialize))]
         private static class AddCommands
         {
             internal static void Postfix()
@@ -16,10 +16,23 @@
                 }
                 uConsole.RegisterCommand("decoration_spawn", new Action(CONSOLE_TrySpawnDecoration));
                 uConsole.RegisterCommand("decoration_search", new Action(CONSOLE_SearchDecoration));
+                uConsole.RegisterCommand("decoration_destroy", new Action(CONSOLE_DestroyDecoration));
                 uConsole.RegisterCommand("decoration_list_repopulate", new Action(() => MelonCoroutines.Start(CONSOLE_PopulateDecortionsListEnum())));
             }
+        }        
+        
+        [HarmonyPatch(typeof(uConsoleHistory), nameof(uConsoleHistory.Add))]
+        private static class SkipAddingToHistory
+        {
+            internal static bool Prefix(string text)
+            {
+                if (text.StartsWith("decoration_destroy"))
+                {
+                    return false;
+                }
+                return true;
+            }
         }
-
 
         public static Dictionary<string, AssetReference> allVanillaDecorations = new(StringComparer.InvariantCultureIgnoreCase);
 
@@ -38,7 +51,7 @@
             //allVanillaDecorations[name].LoadAssetAsync<GameObject>().WaitForCompletion() : null;
             //Il2CppTLD.AddressableAssets.AssetHelper.SafeLoadAssetAsync<GameObject>(name).WaitForCompletion();
 
-            if (CarryableData.carryablePrefabDefinition.ContainsKey(name))
+            if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable)
             {
                 if (CarryableData.carryablePrefabDefinition[name].needsReconstruction)
                 {
@@ -67,7 +80,7 @@
             }
             //go = GameObject.Instantiate(go);
 
-            GameManager.GetPlayerManagerComponent().StartPlaceMesh(go, PlaceMeshFlags.DestroyOnCancel, PlaceMeshRules.None);
+            GameManager.GetPlayerManagerComponent().StartPlaceMesh(go, PlaceMeshFlags.DestroyOnCancel, genericPlacementRules);
             uConsole.TurnOff();
         }
 
@@ -90,6 +103,42 @@
                 foreach (string s in found)
                 {
                     uConsoleLog.Add(s);
+                }
+            }
+        }
+
+        public static void CONSOLE_DestroyDecoration()
+        {
+            if (!GameManager.GetSafehouseManager().IsCustomizing())
+            {
+                uConsoleLog.Add("Enable customization mode to use this command");
+                return;
+            }
+
+            string confirmation = uConsole.GetString();
+            if (string.IsNullOrEmpty(confirmation))
+            {
+                uConsoleLog.Add("Usage(to prevent accidents): decoration_destroy fr");
+                return;
+            }
+            else if (confirmation == "fr")
+            {
+                GameObject go = GetInteractiveGameObjectUnderCrosshair();
+                string name = SanitizeObjectName(go.name);
+                if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable == false)
+                {
+                    uConsoleLog.Add("You don't want to do that");
+                    return;
+                }
+                DecorationItem? di = go?.GetComponent<DecorationItem>();
+                if (di != null)
+                {
+                    uConsoleLog.Add("Destroyed " + name);
+                    GameObject.Destroy(go);
+                }
+                else
+                {
+                    uConsoleLog.Add("No decoration found under crosshairs");
                 }
             }
         }
@@ -128,6 +177,7 @@
             //List<string> reconstructed = new();
             foreach (var entry in CarryableData.carryablePrefabDefinition)
             {
+                if (!entry.Value.pickupable) continue;
                 if (!entry.Value.needsReconstruction) allVanillaDecorations[entry.Key] = new AssetReference(entry.Value.assetPath);
                 else allVanillaDecorations[entry.Key] = new AssetReference();//reconstructed.Add(entry.Key);
             }

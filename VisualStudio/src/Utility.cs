@@ -94,7 +94,7 @@ namespace SCPlus
     }
     internal static class Utility
     {
-        public const string modVersion = "1.8.3";
+        public const string modVersion = "1.9.0";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -110,6 +110,7 @@ namespace SCPlus
         public static readonly string fireSaveDataTag = "fireBarrels";
         public static readonly string movablesSaveDataTag = "carryables";
 
+        public static PlaceMeshRules genericPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects;
 
         public static readonly string missingGuid = "MISSING GUID";
 
@@ -121,7 +122,7 @@ namespace SCPlus
         public enum LayerMask
         {
             Default = 1,
-            PossibleDecoration = 786945, // Default, TerrainObject, Container, InteractiveProp
+            PossibleDecoration = 787009, // Default(0), Decoration(6), TerrainObject(9), Container(18), InteractiveProp(19)
 
         }
 
@@ -278,6 +279,25 @@ namespace SCPlus
             return t.gameObject;
         }
 
+        public static bool TryGetCarryableRoot(Transform t, out GameObject? go)
+        {
+            while (t.parent
+                && !CarryableData.carryablePrefabDefinition.ContainsKey(SanitizeObjectName(t.name)))
+            {
+                t = t.parent;
+            }
+            if (CarryableData.carryablePrefabDefinition.ContainsKey(SanitizeObjectName(t.name)))
+            {
+                go = t.gameObject;
+                return true;
+            }
+            else
+            {
+                go = null;
+                return false;
+            }
+        }
+
         public static LocalizedString TryGetLocalizedName(GameObject go)
         {
             string name = SanitizeObjectName(go.name);
@@ -314,6 +334,7 @@ namespace SCPlus
 
         public static string SanitizeObjectName(string s)
         {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
             s = Regex.Replace(s, @"\s|\(.*?\)", ""); // remove spaces, digits and anything within ()
             s = s.Trim(); // remove leading and trailing spaces
             s = Regex.Replace(s, @"\d+$", ""); // remove trailing digits
@@ -391,26 +412,28 @@ namespace SCPlus
             return oa;
         }
 
-        public static bool FindRoughlyAtPosition(string targetName, Vector3 position, float radius, out GameObject? go)
+        public static bool FindCarryableAtPosition(string targetName, Vector3 position, float radius, out GameObject? go)
         {
             Collider[] hits = Physics.OverlapSphere(position, radius, (int)LayerMask.PossibleDecoration);
 
             foreach (var hit in hits)
             {
                 ///MelonLogger.Msg(hit.transform.name);
-                GameObject parent = GetRealParent(hit.transform);
-
-                if (SanitizeObjectName(parent.name).ToLower().Contains(targetName.ToLower()))
+                if (TryGetCarryableRoot(hit.transform, out GameObject? parent))
                 {
-                    //MelonLogger.Msg(parent.name + " contains " + targetName);
-                    go = parent;
-                    return true;
+                    if (SanitizeObjectName(parent.name).ToLower().Contains(targetName.ToLower()))
+                    {
+                        //MelonLogger.Msg(parent.name + " contains " + targetName);
+                        go = parent;
+                        return true;
+                    }
                 }
+
+
             }
             go = null;
             return false;
         }
-
 
 
         /*

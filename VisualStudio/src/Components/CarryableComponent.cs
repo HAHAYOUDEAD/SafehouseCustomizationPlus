@@ -55,7 +55,7 @@
             else
             {
                 string containerGuid = "";
-                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c))
+                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c)) 
                 {
                     containerGuid = c.GetGuid();
                 }
@@ -243,7 +243,7 @@
             {
                 if (this.gameObject.scene.name == "DontDestroyOnLoad") state |= CS.OnPlayer;
 
-                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer;
+                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer; 
 
                 else state |= CS.Removed;
 

@@ -6,23 +6,32 @@ namespace SCPlus
 
     internal class MiscPatches
     {
-        /*
+        
         [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
-        private static class dfhdfghg
+        public static class SkipOutline
         {
-            internal static void Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, MaterialPropertyBlock propertyBlock)
+            public static List<int> inProximity = new();
+            internal static bool Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, ref MaterialPropertyBlock propertyBlock)
             {
-                //if (renderers.Count > 0) PrintShaderProperties(renderers[0].material, propertyBlock);
-                if (renderers.Count > 0) 
+                if (Settings.options.outlineVisibility == 1 && propertyBlock != null) // only when proximity based outlines, ignore outline removal
                 {
-                    MelonLogger.Msg("ApplyPropertyBlockToRenderers");
+                    int instanceID = renderers[0].GetInstanceID();
 
+                    if (!inProximity.Contains(instanceID)) // not within proximity
+                    {
+                        if (!propertyBlock.HasColor("_Color")) // just outline, not highlight (player is not looking at object)
+                        {
+                            propertyBlock = null; // remove outline
+                        }
+                    }
                 }
+                if (Settings.options.outlineVisibility == 3) // when disabled
+                {
+                    return false;
+                }
+                return true;
             }
         }
-        */
-
-
 
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.Awake))]
         private static class OutlineThings
@@ -38,6 +47,31 @@ namespace SCPlus
             }
         }
 
+        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.StartCustomizing))]
+        private static class AddBall
+        {
+            internal static void Postfix()
+            {
+                if (Settings.options.outlineVisibility == 1)
+                {
+                    GameManager.GetPlayerTransform().gameObject.GetOrAddComponent<SCPlusDecorationDetector>();
+                }
+            }
+        }
+        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.StopCustomizing))]
+        private static class RemoveBall
+        {
+            internal static void Postfix()
+            {
+                if (Settings.options.outlineVisibility == 1)
+                {
+                    if (GameManager.GetPlayerTransform().TryGetComponent(out SCPlusDecorationDetector d))
+                    { 
+                        GameObject.Destroy(d);
+                    }
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
         private static class AlwaysCustomizable
@@ -117,6 +151,8 @@ namespace SCPlus
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.StartPlaceMesh), [typeof(GameObject), typeof(float), typeof(PlaceMeshFlags), typeof(PlaceMeshRules)])]
         private static class ManagePlacement
         {
+
+            public static Vector3 offset = Vector3.zero;
             internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace)
             {
                 //if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
@@ -136,6 +172,8 @@ namespace SCPlus
 
                 if (di)
                 {
+                    string name = SanitizeObjectName(di.name);
+
                     foreach (Renderer r in di.GetRenderers()) // fix drastic performance drop on some objects
                     {
                         if (r)
@@ -147,6 +185,7 @@ namespace SCPlus
                             }
                         }
                     }
+
                     Il2CppSystem.Collections.Generic.List<DecorationItem> children = new();
                     foreach (DecorationItem child in di.DecorationChildren)
                     {
@@ -156,18 +195,14 @@ namespace SCPlus
                     }
                     di.m_DecorationChildren = children;
 
-
-                    //GameObject parent = GetRealParent(__instance.transform);
-                    // potbelly stove still movable
                     WoodStove ws = objectToPlace.GetComponentInChildren<WoodStove>(true);
-                    if (ws && ws.Fire.IsBurning())
+                    if (ws && ws.Fire?.IsBurning() == true)
                     {
                         GameAudioManager.PlayGUIError();
                         HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHot"));
                         __instance.CancelPlaceMesh();
                         return false;
                     }
-
                     bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight;
 
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
@@ -211,6 +246,7 @@ namespace SCPlus
                             }
                         }
                     }
+                    
                     else if (shouldCalculateWeight)
                     {
                         CarryableData.carriedObjectWeight = di.Weight.ToQuantity(1f);
@@ -230,13 +266,51 @@ namespace SCPlus
 
                     if (di.name.ToLower().Contains("curtain"))
                     {
-                        di.name = SanitizeObjectName(di.name);
+                        di.name = name;
                     }
+
+                    offset = Vector3.zero;
+
+                    if (CarryableData.decorationOverrideData.TryGetValue(name, out OverrideData? od))
+                    {
+                        if (od.placementOffset != Vector3.zero)
+                        {
+                            offset = od.placementOffset;
+                        }
+                    }
+
                 }
 
                 return true;
             }
         }
+
+        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.UpdatePlaceMesh))]
+        private static class PlacementOffset
+        {
+            internal static void Postfix(ref PlayerManager __instance)
+            {
+                if (ManagePlacement.offset != Vector3.zero && __instance.IsInMeshPlacementMode() && __instance.m_ObjectToPlace != null)
+                {
+                    __instance.m_ObjectToPlace.transform.position += ManagePlacement.offset;
+                }
+            }
+        }
+
+
+        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.AttemptToPlaceMesh))]
+        private static class ResetOffset
+        {
+            internal static void Prefix(ref PlayerManager __instance)
+            {
+                if (__instance.CanPlaceCurrentPlaceable())
+                {
+                    ManagePlacement.offset = Vector3.zero;
+                }
+            }
+        }
+
+
 
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ExitMeshPlacement))]
         private static class ExitPlacement
@@ -245,6 +319,7 @@ namespace SCPlus
             internal static void Prefix(ref PlayerManager __instance)
             {
                 di = __instance.m_ObjectToPlaceDecorationItem;
+                //ManagePlacement.offset = Vector3.zero;
             }
             internal static void Postfix()
             {

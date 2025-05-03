@@ -3,62 +3,13 @@ using System.Diagnostics;
 using Il2CppTLD.BigCarry;
 using static Il2Cppgw.gql.Interpreter;
 using Il2CppNodeCanvas.Tasks.Actions;
+using static SCPlus.CarryableData;
 
 namespace SCPlus
 {
 
-    internal class SaveLoadPatches // save-loading
+    internal class SaveLoadPatches
     {
-
-
-
-
-        [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.SaveSceneData))]
-        private static class SaveOmittedData
-        {
-            internal static void Postfix(ref string sceneSaveName)
-            {
-                /*
-                foreach (WoodStove ws in FireManager.m_WoodStoves)
-                {
-                    if (!ws) continue;
-                    string guid = ws.GetComponent<ObjectGuid>()?.Get();
-                    if (!string.IsNullOrEmpty(guid) && ws.Fire && ws.Fire.GetComponent<ObjectGuid>() == null)
-                    {
-                        SCPMain.fireBarrelData[guid] = ws.Fire.Serialize();
-                    }
-                }
-                if (SCPMain.fireBarrelData.Count == 0) return;
-                string serializedData = JSON.Dump(SCPMain.fireBarrelData);
-                //dataManager.Save(serializedData, fireSaveDataTag);
-                */
-                //MelonLogger.Msg(CC.Red, "??????");
-                string serializedMovablesForScene = CarryableManager.SerializeAll(false);
-                //MelonLogger.Msg(CC.Red, serializedMovablesForScene);
-                dataManager.Save(serializedMovablesForScene, movablesSaveDataTag + "_" + sceneSaveName);
-                dataManager.Save(CarryableManager.SerializeAll(true), movablesSaveDataTag + "_carried");
-
-            }
-        }
-
-        /*
-        [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.RestoreGlobalData))] // before LoadSceneData so dict can poopulate before use
-        private static class LoadOmittedData
-        {
-            internal static void Postfix()
-            {
-                string? serializedSaveData = dataManager.Load(fireSaveDataTag);
-                
-
-                if (!string.IsNullOrEmpty(serializedSaveData))
-                {
-                    JSON.MakeInto(JSON.Load(serializedSaveData), out SCPMain.fireBarrelData);
-                }
-
-
-            }
-        }
-        */
 
         [HarmonyPatch(typeof(GameManager), nameof(GameManager.ResetLists))]
         private static class ClearCarryablesOnSceneChange
@@ -69,19 +20,16 @@ namespace SCPlus
             }
         }
 
-        [HarmonyPatch(typeof(Container), nameof(Container.Awake))]
-        private static class MakeContainersMovable
+        [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.SaveSceneData))]
+        private static class SaveOmittedData
         {
-            internal static void Postfix(ref Container __instance)
+            internal static void Postfix(ref string sceneSaveName)
             {
-                string name = SanitizeObjectName(__instance.name);
-                if (CarryableData.carryablePrefabDefinition.ContainsKey(name))
-                {
-                    GameObject parent = GetRealParent(__instance.transform);
-                    MelonLogger.Msg(parent.name);
+                //string serializedMovablesForScene = CarryableManager.SerializeAll(false);
+                //MelonLogger.Msg(CC.Red, serializedMovablesForScene);
+                dataManager.Save(CarryableManager.SerializeAll(false), movablesSaveDataTag + "_" + sceneSaveName);
+                dataManager.Save(CarryableManager.SerializeAll(true), movablesSaveDataTag + "_carried");
 
-                    SCPMain.MakeIntoDecoration(parent);
-                }
             }
         }
 
@@ -90,11 +38,7 @@ namespace SCPlus
         {
             internal static void Postfix(ref string sceneSaveName)
             {
-
-
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                Log(CC.Red, $"SC+ Loading started");
-
 
                 string? serializedSaveData = dataManager.Load(movablesSaveDataTag + "_" + sceneSaveName);
                 string? addSerializedSaveData = dataManager.Load(movablesSaveDataTag + "_carried");
@@ -113,17 +57,10 @@ namespace SCPlus
                     JSON.MakeInto(JSON.Load(addSerializedSaveData), out addDataList);
                 }
 
-
-                //Log(CC.Yellow, $"SC+ Deserializing time: {stopwatch.ElapsedMilliseconds} ms");
-                //lastOperationTookTime = (int)stopwatch.ElapsedMilliseconds;
-
-
-                //List<GameObject> fromGuids = new List<GameObject>();
-
-                for (int i = dataList.Count - 1; i >= 0; i--) // existing decorations that only lack additional data
+                for (int i = dataList.Count - 1; i >= 0; i--) 
                 {
                     var proxy = dataList[i];
-                    if ((proxy.state & CS.ExistingDecoration) == CS.ExistingDecoration)
+                    if ((proxy.state & CS.ExistingDecoration) != 0) // existing decorations that only lack additional data
                     {
                         if (!string.IsNullOrEmpty(proxy.guid))
                         {
@@ -138,65 +75,52 @@ namespace SCPlus
                             }
                         }
                     }
+
+                    // FEATURE remove placing restrictions, fix milling and ammobench height
+
+                    if (proxy.nativeScene.Contains(sceneSaveName))
+                    {
+                        if (FindCarryableAtPosition(proxy.name, proxy.originalPos, 1f, out GameObject? go)) // if was manipulated, find in scene and disable
+                        {
+                            SCPlusCarryable c = go.AddComponent<SCPlusCarryable>();
+                            CarryableManager.Add(c);
+                            c.FromProxy(proxy, true);
+
+
+
+                            if (carryablePrefabDefinition.TryGetValue(proxy.name, out ObjectToModify? otm) && !otm.pickupable) // if can't be picked up, just move to saved position
+                            {
+
+                                go.transform.SetPositionAndRotation(proxy.currentPos, proxy.currentRot);
+
+                                //if (!string.IsNullOrEmpty(proxy.dataToSave)) c.RetrieveAdditionalData(proxy.dataToSave);
+                                dataList.RemoveAt(i);
+
+                                Log(CC.Gray, $"Moving {proxy.name} in scene | native: {proxy.nativeScene} current: {proxy.currentScene}");
+
+                                continue;
+                            }
+
+                            go.active = false;
+                            Log(CC.Gray, $"Disabling {proxy.name} in scene | native: {proxy.nativeScene} current: {proxy.currentScene}");
+
+
+                            if ((proxy.state & CS.Removed) != 0)
+                            {
+
+                                dataList.RemoveAt(i);
+
+
+                                continue;
+                            }
+                        }
+                    }
                 }
 
                 dataList = dataList.Concat(addDataList).ToList();
 
-
-                // if was manipulated, find in scene and disable
-                foreach (var data in dataList)
-                {
-                    if (data.nativeScene == sceneSaveName)
-                    {
-                        if (FindRoughlyAtPosition(data.name, data.originalPos, 1f, out GameObject? go)) 
-                        { 
-                            go.active = false;
-                        }
-                    }
-                }
-
-                Scene currentScene = SceneManager.GetActiveScene();
-
-                // find in scene and make into decoration
-                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
-                {
-                    GameObject parent = GetRealParent(found.transform);
-                    //MelonLogger.Msg(parent.name);
-                    SCPMain.MakeIntoDecoration(parent);
-                }
-
-                foreach (var found in FindObjectsOfTypeInScene<MillingMachine>(currentScene))
-                {
-                    GameObject parent = GetRealParent(found.transform);
-                    //MelonLogger.Msg(parent.name);
-                    SCPMain.MakeIntoDecoration(parent);
-                }
-
-                foreach (var found in FindObjectsOfTypeInScene<AmmoWorkBench>(currentScene))
-                {
-                    GameObject parent = GetRealParent(found.transform);
-                    //MelonLogger.Msg(parent.name);
-                    SCPMain.MakeIntoDecoration(parent);
-                }
-
-                if (SCPMain.hasTFTFTF)
-                {
-                    //MelonLogger.Msg(CC.Blue, "TFTFTF detected");
-                    currentScene = SceneManager.GetSceneByName(currentScene.name + "_DLC01");
-                    if (currentScene.IsValid())
-                    {
-                        //MelonLogger.Msg(CC.Blue, currentScene.name);
-                        foreach (var found in FindObjectsOfTypeInScene<TraderRadio>(currentScene))
-                        {
-                            GameObject parent = GetRealParent(found.transform);
-                            //MelonLogger.Msg(parent.name);
-                            SCPMain.MakeIntoDecoration(parent);
-                        }
-                    }
-                }
-
                 stopwatch.Stop();
-                Log(CC.Red, $"SC+ Loading pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+                Log(CC.Blue, $"SC+ Prep pass: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
 
                 if (dataList.Count == 0) return;
 
@@ -208,7 +132,7 @@ namespace SCPlus
 
                 foreach (var data in dataList)
                 {
-                    CarryableData.carryablePrefabDefinition.TryGetValue(data.name, out ObjectToModify? otm);
+                    carryablePrefabDefinition.TryGetValue(data.name, out ObjectToModify? otm);
                     if (otm == null) continue;
 
                     GameObject instance = AssetHelper.SafeInstantiateAssetAsync(otm.existingDecoration ? data.name : otm.assetPath, globalParent.transform).WaitForCompletion();
@@ -244,22 +168,22 @@ namespace SCPlus
                         carryable.isInstance = true;
                         bool shouldLoadAdditionalData = false;
 
-                        if ((data.state & CS.OnPlayer) == CS.OnPlayer) // in inventory
+                        if ((data.state & CS.OnPlayer) != 0) // in inventory
                         {
                             //dupes when changing scene
-                            Log(CC.Gray, $"Instantiating object in inventory | {data.name} native: {data.nativeScene} current: {data.currentScene}");
+                            Log(CC.Gray, $"Instantiating {data.name} in inventory | native: {data.nativeScene} current: {data.currentScene}");
                             GameManager.GetInventoryComponent().AddDecoration(di);
                             instance.SetActive(false);
                         }
                         else if (data.TryGetContainer()) // in container
                         {
-                            Log(CC.Gray, $"Instantiating object in container | {data.name} native: {data.nativeScene} current: {data.currentScene}");
+                            Log(CC.Gray, $"Instantiating {data.name} in container | native: {data.nativeScene} current: {data.currentScene}");
                             data.TryGetContainer().AddDecorationItem(di);
                             instance.SetActive(false);
                         }
-                        else //if (!data.IsInNativeScene() && GameManager.CompareSceneNames(GameManager.m_ActiveScene, data.currentScene)) // in scene
+                        else // in scene
                         {
-                            Log(CC.Gray, $"Instantiating object in world | {data.name} native: {data.nativeScene} current: {data.currentScene}");
+                            Log(CC.Gray, $"Instantiating {data.name} in scene | native: {data.nativeScene} current: {data.currentScene}");
                             GameObject root = PlaceableManager.FindOrCreateCategoryRoot();
                             instance.transform.SetParent(root.transform);
 
@@ -279,10 +203,8 @@ namespace SCPlus
                 SCPMain.instantiatingCarryables = false;
 
                 stopwatch.Stop();
-                Log(CC.Red, $"SC+ Loading pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+                Log(CC.Blue, $"SC+ Init pass: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
             }
-
-
         }
     }
 }

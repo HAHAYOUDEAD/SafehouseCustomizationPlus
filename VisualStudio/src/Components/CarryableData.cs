@@ -42,7 +42,7 @@ namespace SCPlus
         public Func<GameObject> reconstructAction;
         public bool existingDecoration = false;
         //public bool alwaysReplaceAfterFirstInteraction = false;
-        public bool pickupable = true; // can't dupe/spawn
+        public bool pickupable = true; // can't dupe/spawn if false
     }
 
     internal class OverrideData
@@ -149,18 +149,19 @@ namespace SCPlus
 
 
         };
+      
 
-        public static Dictionary<string, OverrideData> decorationOverrideData = new()
+        public static Dictionary<string, OverrideData> decorationOverrideData = new(StringComparer.OrdinalIgnoreCase)
         {
             {"INTERACTIVE_SURVIVAL_TraderRadio", new() {nameLocID = "SCP_Deco_TraderRadio", weight = 4f} },
             {"CONTAINER_FlareGun", new() {nameLocID = "SCP_Deco_FlareGunCase", weight = 4f} },
-            {"INTERACTIVE_AmmoWorkBench", new() {nameLocID = "SCP_Deco_AmmoWorkbench", weight = 40f, placementOffset = Vector3.up * 0.35f} },
+            {"INTERACTIVE_AmmoWorkBench", new() {nameLocID = "SCP_Deco_AmmoWorkbench", weight = 40f, placementOffset = Vector3.up * 0.8f} },
             {"INTERACTIVE_FireBarrel", new() {weight = 10f} },
             {"INTERACTIVE_PotBellyStove", new() {weight = 30f} },
             {"INTERACTIVE_StoveWoodC", new() {weight = 30f} },
             {"INTERACTIVE_StoveMetalA", new() {weight = 50f} },
             {"INTERACTIVE_Forge", new() {nameLocID = "SCP_Deco_Forge", weight = 50f} },
-            {"INTERACTIVE_IndustrialMillingMachine", new() {weight = 50f, placementOffset = Vector3.up * 0.75f} },
+            {"INTERACTIVE_IndustrialMillingMachine", new() {weight = 50f, placementOffset = Vector3.up * 1.2f} },
             {"CONTAINER_ForestryCrate", new() {weight = 10f} },
             {"CONTAINER_ForestryCrateB", new() {weight = 10f} },
             {"CONTAINER_FirewoodBin", new() {weight = 10f} },
@@ -168,6 +169,7 @@ namespace SCPlus
             {"OBJ_Piano_Prefab", new() { weight = 40f } },
             {"OBJ_CurtainStage_Prefab", new() { weight = 10f } },
             {"OBJ_ClothesHanger_Prefab", new() { weight = 0.1f }},
+            {"CONTAINER_LockBoxB", new() { weight = 0.8f } },
         };
 
         public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)
