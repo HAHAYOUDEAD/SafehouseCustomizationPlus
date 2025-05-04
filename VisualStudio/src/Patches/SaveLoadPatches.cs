@@ -153,7 +153,13 @@ namespace SCPlus
                             break;
                         case CT.MillingMachine:
                             MelonCoroutines.Start(PrepareMillingMachine(instance));
-
+                            break;
+                        case CT.AmmoWorkbench:
+                        case CT.Container:
+                            foreach (Container c in instance.GetComponentsInChildren<Container>())
+                            {
+                                c.m_DisableSerialization = true;
+                            }
                             break;
 
                         default:

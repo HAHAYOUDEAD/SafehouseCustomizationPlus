@@ -17,6 +17,7 @@ namespace SCPlus
         public string dataToSave = "";
         public string guid = "";
         public string containerGuid = "";
+        public int containerIndex = 0; // +1
         //public bool onPlayer = false;
 
         public bool IsInNativeScene()
@@ -28,6 +29,22 @@ namespace SCPlus
         public Container? TryGetContainer()
         {
             if (string.IsNullOrEmpty(containerGuid) || containerGuid == missingGuid) return null;
+
+            if (containerIndex > 0)
+            { 
+                GameObject root = PdidTable.GetGameObject(containerGuid);
+
+                if (root != null)
+                {
+                    Container[] containers = root.GetComponentsInChildren<Container>(false);
+                    if (containers.Length >= containerIndex)
+                    { 
+                        return containers[containerIndex - 1];
+                    }
+                }
+
+                else return null;
+            }
 
             return PdidTable.GetGameObject(containerGuid)?.GetComponent<Container>();
         }

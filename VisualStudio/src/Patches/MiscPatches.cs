@@ -1,4 +1,5 @@
-﻿using Il2CppTLD.BigCarry;
+﻿using Il2Cpp;
+using Il2CppTLD.BigCarry;
 using Il2CppTLD.UI.Scroll;
 
 namespace SCPlus
@@ -25,7 +26,7 @@ namespace SCPlus
                         }
                     }
                 }
-                if (Settings.options.outlineVisibility == 3) // when disabled
+                if (Settings.options.outlineVisibility == 3 && propertyBlock != null) // when disabled
                 {
                     return false;
                 }
@@ -151,8 +152,8 @@ namespace SCPlus
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.StartPlaceMesh), [typeof(GameObject), typeof(float), typeof(PlaceMeshFlags), typeof(PlaceMeshRules)])]
         private static class ManagePlacement
         {
-
             public static Vector3 offset = Vector3.zero;
+
             internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace)
             {
                 //if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
@@ -203,9 +204,11 @@ namespace SCPlus
                         __instance.CancelPlaceMesh();
                         return false;
                     }
-                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight;
 
+                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight;
+                    
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
+                    
                     if (c.Length > 0)
                     {
                         CarryableData.carriedObjectWeight = 0f;
@@ -215,21 +218,14 @@ namespace SCPlus
                             {
                                 CarryableData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
 
-                                if (!SCPMain.justDupedContainer) continue;
+                                //if (!SCPMain.skipWeightCalculationForContainer) continue;
                             }
-                            cc.m_Inspected = true;
-                            cc.m_DisableSerialization = false;
-                            cc.m_RolledSpawnChance = true;
-                            cc.m_NotPopulated = false;
-                            cc.m_StartHasBeenCalled = true;
-                            cc.m_StartInspected = true;
-                            cc.m_GearToInstantiate.Clear();
-                            cc.TryGetComponent(out Lock l);
-                            if (l)
+
+                            if (SCPMain.containerShouldBeEmptied)
                             {
-                                l.SetLockState(LockState.Unlocked);
-                                l.m_LockStateRolled = true;
+                                cc.MakeEmpty();
                             }
+                            
                         }
                         if (shouldCalculateWeight)
                         {
@@ -240,7 +236,7 @@ namespace SCPlus
                             {
                                 GameAudioManager.PlayGUIError();
                                 HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHeavy"));
-                                SCPMain.justDupedContainer = false;
+                                SCPMain.containerShouldBeEmptied = false;
                                 __instance.CancelPlaceMesh();
                                 return false;
                             }
@@ -310,7 +306,32 @@ namespace SCPlus
             }
         }
 
+        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.DoPositionCheck))]
+        private static class OverridePositionCheck
+        { 
+            internal static void Postfix(ref PlayerManager __instance, ref MeshLocationCategory __result)
+            {
+                if (InputManager.GetSprintDown(InputManager.m_CurrentContext) &&
+                   (__result != MeshLocationCategory.Valid ||
+                    __result != MeshLocationCategory.ValidOutOfRange ||
+                    __result != MeshLocationCategory.ValidOutOfRangeFar))
+                {
+                    float distance = Vector3.Distance(__instance.m_ObjectToPlace.transform.position, GameManager.GetPlayerTransform().position);
+                    if (distance > __instance.m_PlacementDistanceFar)
+                    {
+                        __result = MeshLocationCategory.ValidOutOfRangeFar;
+                        return;
+                    }
+                    else if (distance > __instance.m_PlacementDistance)
+                    {
+                        __result = MeshLocationCategory.ValidOutOfRange;
+                        return;
+                    }
 
+                    __result = MeshLocationCategory.Valid;
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ExitMeshPlacement))]
         private static class ExitPlacement
@@ -323,7 +344,7 @@ namespace SCPlus
             }
             internal static void Postfix()
             {
-                SCPMain.justDupedContainer = false;
+                SCPMain.containerShouldBeEmptied = false;
 
                 if (di?.isActiveAndEnabled == true)
                 {

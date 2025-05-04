@@ -39,11 +39,16 @@ namespace SCPlus
 {
     public static class Extensions
     {
-        public static string GetGuid(this Container c)
+        public static bool TryGetGuid(this Container c, out string guid)
         {
-            if (c.GetComponent<ObjectGuid>()) return c.GetComponent<ObjectGuid>().PDID;
-            //if (c.GetComponentInParent<ObjectGuid>()) return c.GetComponentInParent<ObjectGuid>().PDID;
-            return missingGuid;
+            if (c.GetComponent<ObjectGuid>())
+            {
+                guid = c.GetComponent<ObjectGuid>().PDID;
+                return true;
+            }
+            
+            guid = missingGuid;
+            return false;
         }
 
         public static string JsonDumpSkipDefaults<T>(this T obj) // thanks GPT
@@ -66,7 +71,8 @@ namespace SCPlus
 
                 // Skip default values and empyt strings
                 if (value == null || value.Equals(defaultValue)) continue;
-                if (prop.FieldType == typeof(string) && value.Equals(string.Empty)) continue;
+                if (prop.FieldType == typeof(string) && value?.Equals(string.Empty) == true) continue;
+                //if (prop.FieldType == typeof(int) && value?.Equals(-1) == true) continue;
 
                 if (!firstProperty) jsonBuilder.Append(',');
                 firstProperty = false;
@@ -91,6 +97,22 @@ namespace SCPlus
             return new Color(c.r, c.g, c.b, alpha);
         }
 
+        public static void MakeEmpty(this Container c)
+        {
+            c.m_Inspected = true;
+            c.m_DisableSerialization = false;
+            c.m_RolledSpawnChance = true;
+            c.m_NotPopulated = false;
+            c.m_StartHasBeenCalled = true;
+            c.m_StartInspected = true;
+            c.m_GearToInstantiate.Clear();
+
+            if (c.TryGetComponent(out Lock l))
+            {
+                l.SetLockState(LockState.Unlocked);
+                l.m_LockStateRolled = true;
+            }
+        }
     }
     internal static class Utility
     {
@@ -111,6 +133,7 @@ namespace SCPlus
         public static readonly string movablesSaveDataTag = "carryables";
 
         public static PlaceMeshRules genericPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects;
+        public static PlaceMeshRules boxPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects | PlaceMeshRules.AllowStacking;
 
         public static readonly string missingGuid = "MISSING GUID";
 

@@ -126,7 +126,7 @@ namespace SCPlus
 
         [Section("Cheats")]
         [Name("Duplicate")]
-        [Description("WARNING: not thoroughly tested, use at your own risk! \n\nDuplicate decoration item under your crosshair")]
+        [Description("Duplicate decoration item under your crosshair")]
         public KeyCode dupeKey = KeyCode.None;
 
         [Name("Ignore weight")]

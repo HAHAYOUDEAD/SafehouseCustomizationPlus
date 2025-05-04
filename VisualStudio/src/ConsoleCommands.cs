@@ -80,7 +80,9 @@
             }
             //go = GameObject.Instantiate(go);
 
+            SCPMain.containerShouldBeEmptied = true;
             GameManager.GetPlayerManagerComponent().StartPlaceMesh(go, PlaceMeshFlags.DestroyOnCancel, genericPlacementRules);
+            
             uConsole.TurnOff();
         }
 

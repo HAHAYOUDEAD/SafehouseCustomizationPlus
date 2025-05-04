@@ -25,7 +25,7 @@ namespace SCPlus
         public static Dictionary<string, float> autoWeightTable = new(); // object name | weight
 
         public static bool instantiatingCarryables;
-        public static bool justDupedContainer;
+        public static bool containerShouldBeEmptied;
 
         public static bool decorationListPopulated;
 
@@ -383,7 +383,15 @@ namespace SCPlus
                 di.GetDecorationPrefab();
                 di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
                 di.GetCraftingDisplayName();
-                di.m_PlacementRules = genericPlacementRules;
+                if (name.ToLower().Contains("container"))
+                {
+                    di.m_PlacementRules = boxPlacementRules;
+                }
+                else
+                {
+                    di.m_PlacementRules = genericPlacementRules;
+                }
+                
                 //di.m_IconReference = new("");
 
                 RelevantSetupForDecorationItem(di);
@@ -436,8 +444,9 @@ namespace SCPlus
                     }
                     GameObject dupe = GameObject.Instantiate(go);
                     dupe.name = name;
+                    containerShouldBeEmptied = true;
                     GameManager.GetPlayerManagerComponent().StartPlaceMesh(dupe, PlaceMeshFlags.DestroyOnCancel, di.m_PlacementRules);
-                    justDupedContainer = true;
+                    
                 }
             }
             /*
