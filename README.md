@@ -16,10 +16,9 @@ Consider the mod experimental. There were no reports of game-breaking bugs, but 
 - Custom icons (incomplete)
 - `decoration_spawn`, `decoration_search` and `decoration_destroy` commands
 - Customization mode object outline options
+- Hold `sprint` key to remove placing restrictions
 
 ## Installation:
 Unpack latest [release](https://github.com/HAHAYOUDEAD/SafehouseCustomizationPlus/releases) .zip into `.../Mods/`
 
 Requires [ModSettings](https://github.com/DigitalzombieTLD/ModSettings), [ModData](https://github.com/dommrogers/ModData), [LocalizationUtilities](https://github.com/dommrogers/LocalizationUtilities) 
-
-Some objects currently require [Placing Anywhere](https://github.com/DigitalzombieTLD/tld-placing-anywhere) to place them
