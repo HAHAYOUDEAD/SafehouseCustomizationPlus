@@ -16,9 +16,10 @@
                 { 
                     __instance.m_AllowInInventory = false;
                     __instance.enabled = false;
+                    return;
                 }
 
-                
+                /*
                 if (CarryableData.blacklistSpecific.ContainsKey(GameManager.m_ActiveScene))
                 {
                     foreach (var entry in CarryableData.blacklistSpecific[GameManager.m_ActiveScene]) 
@@ -29,10 +30,12 @@
                             {
                                 __instance.m_AllowInInventory = false;
                                 __instance.enabled = false;
+                                return;
                             }
                         }
                     }
                 }
+                */
 
                 BreakDown bd = __instance.GetComponentInChildren<BreakDown>();
 
@@ -101,10 +104,70 @@
         }
 
 
+        [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.InitializeInteraction))]
+        public static class TimedOutline
+        {
+            public static Dictionary<int, object> coroutines = new();
+
+            internal static void Postfix(DecorationItem __instance)
+            {
+                if (Settings.options.outlineVisibility == 2)
+                {
+
+                    int id = __instance.GetInstanceID();
+                    if (coroutines.TryGetValue(id, out object? coroutine))
+                    {
+                        MelonCoroutines.Stop(coroutine);
+                    }
+                    coroutines[id] = MelonCoroutines.Start(DisableOutline(__instance));
+                }
+            }
+        }
+
+        public static IEnumerator DisableOutline(DecorationItem di)
+        {
+            yield return new WaitForSeconds(1.5f);
+
+            while (di.GetInstanceID() == GetDecorationIDUnderCrosshair())
+            {
+                if (!di || !GameManager.GetSafehouseManager().IsCustomizing()) yield break;
+
+                yield return new WaitForSeconds(1.5f);
+            }
+
+            ResetPropertyBlockOnRenderers(di.GetRenderers());
+
+            TimedOutline.coroutines.Remove(di.GetInstanceID());
+
+            yield break;
+        }
+
+        public static int GetDecorationIDUnderCrosshair()
+        {
+            /*
+            PlayerManager pm = GameManager.GetPlayerManagerComponent();
+
+            float maxPickupRange = GameManager.GetGlobalParameters().m_MaxPickupRange;
+            float maxRange = pm.ComputeModifiedPickupRange(maxPickupRange);
+            */
+            Ray ray = GameManager.GetMainCamera().ScreenPointToRay(Input.mousePosition);
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 3f, (int)Utility.LayerMask.PossibleDecoration))
+            {
+                DecorationItem di = hit.collider.GetComponentInParent<DecorationItem>();
+                if (di)
+                {
+                    return di.GetInstanceID();
+                }
+            }
+            return 0;
+        }
+
+
         [HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.OnStartCustomization))]
         private static class StartCustomizationOnItem
         {
-            internal static void Postfix(ref DecorationItem __instance)
+            internal static bool Prefix(ref DecorationItem __instance)
             {
                 //if (!__instance.isActiveAndEnabled) return;
 
@@ -147,6 +210,11 @@
 
                     }
                 }
+
+                __instance.RefreshInteractionSetup();
+
+                if (Settings.options.outlineVisibility > 0) return false;
+                else return true;
             }
         }
 
@@ -165,12 +233,28 @@
         {
             internal static bool Prefix(ref DecorationItem __instance)
             {
-                
+                string name = SanitizeObjectName(__instance.name);
+
+                if (name.Contains("CONTAINER_FlareGun"))
+                { 
+                    __instance.RemoveFromHierarchy();
+                    GameManager.GetInventoryComponent().AddDecoration(__instance);
+                    return false;
+                }
+
                 WoodStove ws = __instance.GetComponentInChildren<WoodStove>();
                 if (ws && ws.Fire.IsBurning())
                 {
                     GameAudioManager.PlayGUIError();
                     HUDMessage.AddMessage(Localization.Get("SCP_Action_CantPickupHot"), false, true);
+                    __instance.m_ActionPicker.TrySetEnabled(false);
+                    return false;
+                }
+
+                if (CarryableData.carryablePrefabDefinition.ContainsKey(name) && CarryableData.carryablePrefabDefinition[name].pickupable == false)
+                {
+                    GameAudioManager.PlayGUIError();
+                    HUDMessage.AddMessage(Localization.Get("SCP_Action_CantPickupPeriod"), false, true);
                     __instance.m_ActionPicker.TrySetEnabled(false);
                     return false;
                 }

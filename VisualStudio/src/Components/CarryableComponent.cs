@@ -30,7 +30,7 @@
         {
             CS state = GetState();
             string data = "";
-            bool nativeOrInactiveContainer = this.type == CT.Container && (!this.gameObject.activeInHierarchy || CurrentlyInNativeScene(this.nativeScene));
+            bool nativeOrInactiveContainer = this.type == CT.Container && (!this.gameObject.activeInHierarchy || CurrentlyInNativeScene(this.nativeScene) && !this.isInstance);
             if ((state & CS.Removed) == 0 && !nativeOrInactiveContainer)
             {
                 if (string.IsNullOrEmpty(additionalData))
@@ -55,9 +55,31 @@
             else
             {
                 string containerGuid = "";
-                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c))
+                int containerIndex = 0;
+
+                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c)) 
                 {
-                    containerGuid = c.GetGuid();
+                    if (c.TryGetGuid(out string foundGuid))
+                    {
+                        containerGuid = foundGuid;
+                    }
+                    else
+                    {
+                        if (c.gameObject.TryGetComponentInParent(out ObjectGuid og))
+                        {
+                            containerGuid = og.PDID;
+
+                            Container[] cc = og.GetComponentsInChildren<Container>(false);
+                            for (int i = 0; i < cc.Length; i++)
+                            {
+                                if (cc[i] == c)
+                                {
+                                    containerIndex = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
                 proxy = new()
                 {
@@ -70,6 +92,7 @@
                     currentRot = this.transform.rotation,
                     dataToSave = data,
                     containerGuid = containerGuid,
+                    containerIndex = containerIndex,
                     state = state,
                 };
             }
@@ -243,7 +266,7 @@
             {
                 if (this.gameObject.scene.name == "DontDestroyOnLoad") state |= CS.OnPlayer;
 
-                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer;
+                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer; 
 
                 else state |= CS.Removed;
 
