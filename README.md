@@ -14,7 +14,8 @@ Consider the mod experimental. There were no reports of game-breaking bugs, but 
 - Revert workbench interaction to how it was before
 - Weight of a decoration counts when moving it
 - Custom icons (incomplete)
-- `decoration_spawn` and `decoration_search` commands
+- `decoration_spawn`, `decoration_search` and `decoration_destroy` commands
+- Customization mode object outline options
 
 ## Installation:
 Unpack latest [release](https://github.com/HAHAYOUDEAD/SafehouseCustomizationPlus/releases) .zip into `.../Mods/`
