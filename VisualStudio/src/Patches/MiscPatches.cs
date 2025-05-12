@@ -311,6 +311,8 @@ namespace SCPlus
         { 
             internal static void Postfix(ref PlayerManager __instance, ref MeshLocationCategory __result)
             {
+                if (!__instance.m_ObjectToPlaceDecorationItem) return;
+
                 if (InputManager.GetSprintDown(InputManager.m_CurrentContext) &&
                    (__result != MeshLocationCategory.Valid ||
                     __result != MeshLocationCategory.ValidOutOfRange ||

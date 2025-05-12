@@ -4,6 +4,8 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Diagnostics;
 using Il2CppSteamworks;
 using Il2CppTLD.OptionalContent;
+using UnityEngine.ResourceManagement.ResourceProviders;
+using Il2CppTLD.BigCarry;
 
 namespace SCPlus
 {
@@ -30,6 +32,13 @@ namespace SCPlus
         public static bool decorationListPopulated;
 
         public static int carryableCoroutineCounter = 0;
+
+
+
+
+
+
+
 
         public override void OnInitializeMelon()
         {
@@ -82,7 +91,10 @@ namespace SCPlus
                 hasTFTFTF = OptionalContentManager.Instance.InstalledContent.ContainsKey("2091330");
                 Settings.OnInitialize();
             }
+
+
         }
+
 
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {

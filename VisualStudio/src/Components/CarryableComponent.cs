@@ -79,6 +79,10 @@
                                 }
                             }
                         }
+                        else
+                        {
+                            containerGuid = missingGuid;
+                        }
                     }
                 }
                 proxy = new()
