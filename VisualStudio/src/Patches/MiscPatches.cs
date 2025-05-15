@@ -34,6 +34,34 @@ namespace SCPlus
             }
         }
 
+
+        [HarmonyPatch(typeof(Container), nameof(Container.Deserialize))]
+        private static class InitDecoInContainers
+        {
+            internal static void Postfix(ref Container __instance)
+            {
+                foreach (var deco in __instance.m_DecorationItems)
+                {
+                    if (deco)
+                    {
+                        BreakDown bd = __instance.GetComponentInChildren<BreakDown>();
+
+                        if (!deco.m_AllowInInventory)
+                        {
+                            deco.m_AllowInInventory = true;
+
+                            SCPMain.RelevantSetupForDecorationItem(deco, true);
+
+                            if (bd)
+                            {
+                                bd.m_AllowEditModePlacement = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.Awake))]
         private static class OutlineThings
         {

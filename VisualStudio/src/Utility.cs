@@ -116,7 +116,7 @@ namespace SCPlus
     }
     internal static class Utility
     {
-        public const string modVersion = "1.9.0";
+        public const string modVersion = "1.9.1";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
