@@ -43,9 +43,13 @@
         </Reference>
     </ItemDefinitionGroup>
     <ItemGroup>
+      <None Remove="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
+      <None Remove="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <None Remove="Resources\Localization.json" />
     </ItemGroup>
     <ItemGroup>
+      <EmbeddedResource Include="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
+      <EmbeddedResource Include="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <EmbeddedResource Include="Resources\Localization.json" />
     </ItemGroup>
 

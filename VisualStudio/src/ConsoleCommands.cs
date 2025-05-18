@@ -14,10 +14,13 @@
                     SCPMain.decorationListPopulated = true;
                     MelonCoroutines.Start(ConsoleCommands.CONSOLE_PopulateDecortionsListEnum()); 
                 }
-                uConsole.RegisterCommand("decoration_spawn", new Action(CONSOLE_TrySpawnDecoration));
-                uConsole.RegisterCommand("decoration_search", new Action(CONSOLE_SearchDecoration));
-                uConsole.RegisterCommand("decoration_destroy", new Action(CONSOLE_DestroyDecoration));
-                uConsole.RegisterCommand("decoration_list_repopulate", new Action(() => MelonCoroutines.Start(CONSOLE_PopulateDecortionsListEnum())));
+                if (!uConsole.CommandIsRegistered("decoration_spawn"))
+                {
+                    uConsole.RegisterCommand("decoration_spawn", new Action(CONSOLE_TrySpawnDecoration));
+                    uConsole.RegisterCommand("decoration_search", new Action(CONSOLE_SearchDecoration));
+                    uConsole.RegisterCommand("decoration_destroy", new Action(CONSOLE_DestroyDecoration));
+                    uConsole.RegisterCommand("decoration_list_repopulate", new Action(() => MelonCoroutines.Start(CONSOLE_PopulateDecortionsListEnum())));
+                }
             }
         }        
         
@@ -80,7 +83,7 @@
             }
             //go = GameObject.Instantiate(go);
 
-            SCPMain.containerShouldBeEmptied = true;
+            SCPMain.decorationJustDuped = true;
             GameManager.GetPlayerManagerComponent().StartPlaceMesh(go, PlaceMeshFlags.DestroyOnCancel, genericPlacementRules);
             
             uConsole.TurnOff();
@@ -179,12 +182,12 @@
             //List<string> reconstructed = new();
             foreach (var entry in CarryableData.carryablePrefabDefinition)
             {
-                if (!entry.Value.pickupable) continue;
+                if (!entry.Value.pickupable || entry.Value.existingDecoration) continue;
                 if (!entry.Value.needsReconstruction) allVanillaDecorations[entry.Key] = new AssetReference(entry.Value.assetPath);
                 else allVanillaDecorations[entry.Key] = new AssetReference();//reconstructed.Add(entry.Key);
             }
 
-            uConsoleLog.Add($"Done with {allVanillaDecorations.Count} decorations");
+            uConsoleLog.Add($"SC+ decoration list populated with {allVanillaDecorations.Count} entries");
             uConsoleCommandParameterSet? ccps = null;
 
             foreach (uConsoleCommandParameterSet set in uConsoleAutoComplete.m_CommandParameterSets)

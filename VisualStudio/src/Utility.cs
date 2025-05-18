@@ -116,12 +116,14 @@ namespace SCPlus
     }
     internal static class Utility
     {
-        public const string modVersion = "1.9.1";
+        public const string modVersion = "1.9.3";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
         public const string resourcesFolder = "SafehouseCustomizationPlus.Resources.";
-        public const string iconsFolder = "SCPlus/Icons/";
+        public const string resourcesFolderForAssumingPlayersUnableToRead = "DumbShield";
+        public const string modFolder = "SCPlus/";
+        public const string iconsFolder = modFolder + "Icons/";
         public const string iconsCatalog = "catalog_SCPlusIcons";
         public const string placeholderIconName = "placeholder";
 
@@ -171,23 +173,6 @@ namespace SCPlus
         {
             return !string.IsNullOrEmpty(scene) && scene.Contains("MainMenu");
         }
-
-        public static string? LoadEmbeddedJSON(string name)
-        {
-            name = resourcesFolder + name;
-
-            string? result = null;
-
-            Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
-            if (stream != null)
-            {
-                StreamReader reader = new StreamReader(stream);
-                result = reader.ReadToEnd();
-            }
-
-            return result;
-        }
-
 
         public static GameObject GetInteractiveGameObjectUnderCrosshair()
         {

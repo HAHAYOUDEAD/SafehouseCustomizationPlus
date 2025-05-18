@@ -36,7 +36,7 @@
                         proxy = c.ToProxy(false);
                     }
 
-                    bool onPlayer = (proxy.state & CS.OnPlayer) == CS.OnPlayer;
+                    bool onPlayer = (proxy.state & CS.OnPlayer) != 0;
                     if (!carried &&
                         (!onPlayer || // not on player
                         (onPlayer && currentScenes.Contains(SceneManager.GetSceneByName(proxy.nativeScene)) && !c.isInstance))) // or in native scene and just picked up
@@ -46,23 +46,30 @@
                             proxy.state &= ~CS.OnPlayer;
                             proxy.state |= CS.Removed;
                         }
-                        if ((proxy.state & CS.Removed) == CS.Removed)
+
+                        if ((proxy.state & CS.Removed) != 0)
                         {
                             proxy.dataToSave = "";
                         }
+
                         bool alreadyExists = false;
-                        for (int i = 0; i < allDataInScene.Count; i++)
+
+                        if ((proxy.state & CS.Surplus) == 0)
                         {
-                            if (proxy.name == allDataInScene[i].name && WithinDistance(proxy.originalPos, allDataInScene[i].originalPos))
+                            for (int i = 0; i < allDataInScene.Count; i++)
                             {
-                                if ((allDataInScene[i].state & CS.Removed) == CS.Removed)
+                                if (proxy.name == allDataInScene[i].name && WithinDistance(proxy.originalPos, allDataInScene[i].originalPos))
                                 {
-                                    allDataInScene[i] = proxy;
+                                    if ((allDataInScene[i].state & CS.Removed) != 0)
+                                    {
+                                        allDataInScene[i] = proxy;
+                                    }
+                                    alreadyExists = true;
+                                    break;
                                 }
-                                alreadyExists = true;
-                                break;
                             }
                         }
+
                         if (!alreadyExists) allDataInScene.Add(proxy);
                     }
                     if (carried && onPlayer)

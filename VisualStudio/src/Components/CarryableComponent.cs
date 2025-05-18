@@ -20,6 +20,7 @@
         public Vector3 originalPos = Vector3.zero;
         public string additionalData = "";
         public bool isInstance = false;
+        public bool isDuped = false;
 
         public void OnDestroy()
         {
@@ -91,7 +92,7 @@
                     type = this.type,
                     nativeScene = this.nativeScene,
                     currentScene = this.gameObject.scene.name == "DontDestroyOnLoad" ? "" : this.gameObject.scene.name,
-                    originalPos = this.originalPos,
+                    originalPos = this.isDuped ? Vector3.zero : this.originalPos,
                     currentPos = this.transform.position,
                     currentRot = this.transform.rotation,
                     dataToSave = data,
@@ -115,6 +116,7 @@
                 this.originalPos = proxy.originalPos;
                 if (!ignorePosition) this.transform.position = proxy.currentPos;
                 if (!ignorePosition) this.transform.rotation = proxy.currentRot;
+                if ((proxy.state & CS.Surplus) != 0) this.isDuped = true;
             }
         }
 
@@ -265,6 +267,8 @@
         public CS GetState()
         {
             CS state = CS.None;
+
+            if (this.isDuped) state |= CS.Surplus;
 
             if (!this.gameObject.activeInHierarchy)
             {

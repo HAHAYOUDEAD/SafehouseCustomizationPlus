@@ -100,7 +100,8 @@ namespace SCPlus
             OnPlayer = 2,
             Dismantled = 4,
             InContainer = 8,
-            ExistingDecoration = 16
+            ExistingDecoration = 16,
+            Surplus = 32
         }
 
         public static SCPlusCarryable? SetupCarryable(DecorationItem di, bool enlist)
@@ -112,7 +113,17 @@ namespace SCPlus
                 {
                     SCPlusCarryable carryable = di.GetOrAddComponent<SCPlusCarryable>();
                     if (string.IsNullOrEmpty(carryable.objectName)) carryable.objectName = SanitizeObjectName(di.name);
-                    if (carryable.originalPos == Vector3.zero) carryable.originalPos = di.transform.position;
+                    if (carryable.originalPos == Vector3.zero)
+                    {
+                        if (di.transform.position == Vector3.zero)
+                        {
+                            carryable.isDuped = true;
+                        }
+                        else
+                        {
+                            carryable.originalPos = di.transform.position;
+                        }
+                    }
                     if (string.IsNullOrEmpty(carryable.nativeScene)) carryable.nativeScene = di.gameObject.scene.name;
                     carryable.type = entry.Value.type;
 
@@ -133,6 +144,15 @@ namespace SCPlus
         public static string[] blacklist = new string[]
         {
             "CONTAINER_CacheStoreCommon",
+        };
+        
+        public static string[] skipLayerChange = new string[] // startswith
+        {
+            "INTERACTIVE_Forge",
+            "OBJ_Suitcase",
+            "CONTAINER_FirewoodBin",
+            "CONTAINER_ForestryCrate"
+
         };
 
         public static Dictionary<string, ObjectToModify> carryablePrefabDefinition = new(StringComparer.OrdinalIgnoreCase)

@@ -27,33 +27,28 @@ namespace SCPlus
         public static Dictionary<string, float> autoWeightTable = new(); // object name | weight
 
         public static bool instantiatingCarryables;
-        public static bool containerShouldBeEmptied;
+        public static bool decorationJustDuped;
 
         public static bool decorationListPopulated;
 
         public static int carryableCoroutineCounter = 0;
 
-
-
-
-
-
-
-
         public override void OnInitializeMelon()
         {
 
             modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
-            LocalizationManager.LoadJsonLocalization(LoadEmbeddedJSON("Localization.json"));
+            LocalizationManager.LoadJsonLocalization(ResourceHandler.LoadEmbeddedJSON("Localization.json"));
 
             Settings.OnLoad();
 
-            AsyncOperationHandle<IResourceLocator> handle2 = null;
+            ResourceHandler.ExtractFolderFromResources(modsPath + modFolder, resourcesFolder + resourcesFolderForAssumingPlayersUnableToRead, true);
+
+            AsyncOperationHandle<IResourceLocator> handle = null;
             try
             {
                 string path = modsPath + iconsFolder + iconsCatalog + ".json";
-                handle2 = Addressables.LoadContentCatalogAsync(path);
-                catalogLocator = handle2.WaitForCompletion();
+                handle = Addressables.LoadContentCatalogAsync(path);
+                catalogLocator = handle.WaitForCompletion();
                 if (catalogLocator != null && catalogLocator.Keys != null)
                 {
                     for (int i = 0; i < catalogLocator.Keys.ToList().Count; i++)
@@ -77,9 +72,7 @@ namespace SCPlus
                 Log(CC.Red, $"Catalog {iconsCatalog} load failed: " + e.ToString());
             }
             
-            //handle?.Release();
-            
-            
+            //handle?.Release(); 
         }
 
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -91,10 +84,7 @@ namespace SCPlus
                 hasTFTFTF = OptionalContentManager.Instance.InstalledContent.ContainsKey("2091330");
                 Settings.OnInitialize();
             }
-
-
         }
-
 
         public override void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
@@ -164,13 +154,6 @@ namespace SCPlus
                 stopwatch.Stop();
                 Log(CC.Blue, $"SC+ Lookup pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
             }
-
-
-
-
-
-
-
         }
 
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
@@ -202,7 +185,7 @@ namespace SCPlus
             {
                 sanitizedName = SanitizeObjectName(di.name);
             }
-            string path = Directory.CreateDirectory(modsPath + "/SCPlus/Screenshots/").FullName;
+            string path = Directory.CreateDirectory(modsPath + modFolder + "Screenshots/").FullName;
             if (sanitizedName == "")
             {
                 sanitizedName = Il2Cpp.Utils.GetGuid();
@@ -321,7 +304,10 @@ namespace SCPlus
 
         public static void SetLayersToInteractiveProp(DecorationItem di)
         {
-            if (di.name.ToLower().Contains("forge")) return;
+            foreach (string name in CarryableData.skipLayerChange)
+            {
+                if (di.name.ToLower().StartsWith(name.ToLower())) return;
+            }
 
             foreach (Collider c in di.GetComponentsInChildren<Collider>())
             {
@@ -389,7 +375,7 @@ namespace SCPlus
 
                 LocalizedString ls = TryGetLocalizedName(go);
                 DecorationItem di = go.AddComponent<DecorationItem>();
-                go.layer = vp_Layer.InteractiveProp;
+                SetLayersToInteractiveProp(di);
 
                 di.m_DecorationPrefab = new(name);
                 di.GetDecorationPrefab();
@@ -456,7 +442,7 @@ namespace SCPlus
                     }
                     GameObject dupe = GameObject.Instantiate(go);
                     dupe.name = name;
-                    containerShouldBeEmptied = true;
+                    decorationJustDuped = true;
                     GameManager.GetPlayerManagerComponent().StartPlaceMesh(dupe, PlaceMeshFlags.DestroyOnCancel, di.m_PlacementRules);
                     
                 }

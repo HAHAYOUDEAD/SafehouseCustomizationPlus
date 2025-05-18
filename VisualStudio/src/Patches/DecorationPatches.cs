@@ -135,7 +135,7 @@
                 yield return new WaitForSeconds(1.5f);
             }
 
-            ResetPropertyBlockOnRenderers(di.GetRenderers());
+            if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem != di) ResetPropertyBlockOnRenderers(di.GetRenderers());
 
             TimedOutline.coroutines.Remove(di.GetInstanceID());
 

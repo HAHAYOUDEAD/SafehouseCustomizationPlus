@@ -43,7 +43,8 @@ namespace SCPlus
         public static GameObject ReconstructStoveWood()
         {
             GameObject go = new GameObject("INTERACTIVE_StoveWoodC");
-            GameObject main = AssetHelper.SafeInstantiateAssetAsync("Assets/ArtAssets/Env/Objects/OBJ_StoveWoodC/OBJ_StoveWoodCMain.FBX", go.transform).WaitForCompletion();
+            go.active = false;
+            GameObject mesh = AssetHelper.SafeInstantiateAssetAsync("Assets/ArtAssets/Env/Objects/OBJ_StoveWoodC/OBJ_StoveWoodCMain.FBX", go.transform).WaitForCompletion();
             GameObject stove = new GameObject("Stove");
             stove.transform.parent = go.transform;
             GameObject hinge = new GameObject("Hinge");
@@ -58,7 +59,7 @@ namespace SCPlus
 
             Material material = AssetHelper.SafeLoadAssetAsync<Material>("Assets/ArtAssets/Env/Objects/Materials/OBJ_StoveWoodB_Dif.mat").WaitForCompletion();
 
-            Renderer[] renderers = [main.GetComponent<MeshRenderer>(), door.GetComponent<MeshRenderer>()];
+            Renderer[] renderers = [mesh.GetComponent<MeshRenderer>(), door.GetComponent<MeshRenderer>()];
             foreach (Renderer r in renderers)
             {
                 r.sharedMaterial = material;
@@ -81,7 +82,7 @@ namespace SCPlus
             fireRoot.name = "Fire";
             //fireRoot.parent = stove.transform;
             GameObject cookingPointIndicator = fireDonor.transform.Find("PlacePoints/Cylinder").gameObject;
-            cookingPointIndicator.transform.parent = go.transform;
+            //cookingPointIndicator.transform.parent = go.transform;
             cookingPointIndicator.transform.localPosition = Vector3.zero;
 
             GameObject.Destroy(fireDonor);
@@ -114,11 +115,10 @@ namespace SCPlus
             ws.m_ObjectAnim = oa;
             ws.m_DefaultHoverText = new LocalizedString() { m_LocalizationID = "GAMEPLAY_WoodStove" };
 
-
-            ActiveBurner ab = stove.AddComponent<ActiveBurner>();
+            ActiveBurner ab = mesh.AddComponent<ActiveBurner>();
             ab.m_Fire = fire;
-            ab.m_Rend = main.GetComponent<Renderer>();
-            ab.m_Material = ab.m_Rend.sharedMaterial;
+            //ab.m_Rend = mesh.GetComponent<Renderer>(); // handled by ab.Start()
+            //ab.m_Material = ab.m_Rend.sharedMaterial;
             ab.m_OpacityRange = new MinMax(0f, 1f);
 
             // cooking slots
@@ -165,6 +165,8 @@ namespace SCPlus
             ws.enabled = true;
 
             GameObject goa = Resources.Load<GameObject>("Assets/PrefabInstance/INTERACTIVE_StoveWoodC_LOD0");
+
+            go.active = true;
 
             return go;
         }

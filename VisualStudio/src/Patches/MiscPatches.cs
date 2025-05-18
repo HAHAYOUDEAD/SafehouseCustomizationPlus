@@ -125,7 +125,7 @@ namespace SCPlus
                 }
                 return true;
             }
-        }
+        } 
 
         [HarmonyPatch(typeof(BigCarryItem), nameof(BigCarryItem.PerformInteraction))]
         private static class NoTravoisWhenCustomizing
@@ -182,7 +182,7 @@ namespace SCPlus
         {
             public static Vector3 offset = Vector3.zero;
 
-            internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace)
+            internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace, ref bool __result)
             {
                 //if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
 
@@ -230,10 +230,11 @@ namespace SCPlus
                         GameAudioManager.PlayGUIError();
                         HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHot"));
                         __instance.CancelPlaceMesh();
+                        __result = false;
                         return false;
                     }
 
-                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight;
+                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight && !SCPMain.decorationJustDuped;
                     
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
                     
@@ -249,7 +250,7 @@ namespace SCPlus
                                 //if (!SCPMain.skipWeightCalculationForContainer) continue;
                             }
 
-                            if (SCPMain.containerShouldBeEmptied)
+                            if (SCPMain.decorationJustDuped)
                             {
                                 cc.MakeEmpty();
                             }
@@ -264,8 +265,9 @@ namespace SCPlus
                             {
                                 GameAudioManager.PlayGUIError();
                                 HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHeavy"));
-                                SCPMain.containerShouldBeEmptied = false;
+                                //SCPMain.decorationJustDuped = false;
                                 __instance.CancelPlaceMesh();
+                                __result = false;
                                 return false;
                             }
                         }
@@ -279,14 +281,23 @@ namespace SCPlus
                         {
                             GameAudioManager.PlayGUIError();
                             HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHeavy"));
+                            //SCPMain.decorationJustDuped = false;
                             __instance.CancelPlaceMesh();
+                            __result = false;
                             return false;
                         }
                     }
 
                     SCPlusCarryable? carryable = CarryableData.SetupCarryable(di, false); // listed in exitmeshplacement
 
-                    if (carryable) carryable.RetrieveAdditionalData();
+                    if (carryable != null)
+                    {
+                        if (SCPMain.decorationJustDuped)
+                        { 
+                            carryable.isInstance = true;
+                        }
+                        carryable.RetrieveAdditionalData();
+                    }
 
                     if (di.name.ToLower().Contains("curtain"))
                     {
@@ -374,7 +385,7 @@ namespace SCPlus
             }
             internal static void Postfix()
             {
-                SCPMain.containerShouldBeEmptied = false;
+                SCPMain.decorationJustDuped = false;
 
                 if (di?.isActiveAndEnabled == true)
                 {
