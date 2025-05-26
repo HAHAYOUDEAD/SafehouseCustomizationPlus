@@ -19,6 +19,6 @@ Consider the mod experimental. There were no reports of game-breaking bugs, but 
 - Hold `sprint` key to remove placing restrictions
 
 ## Installation:
-Unpack latest [release](https://github.com/HAHAYOUDEAD/SafehouseCustomizationPlus/releases) .zip into `.../Mods/`
+Download latest [release](https://github.com/HAHAYOUDEAD/SafehouseCustomizationPlus/releases) .dll into `.../Mods/`
 
 Requires [ModSettings](https://github.com/DigitalzombieTLD/ModSettings), [ModData](https://github.com/dommrogers/ModData), [LocalizationUtilities](https://github.com/dommrogers/LocalizationUtilities) 
