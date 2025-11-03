@@ -27,7 +27,7 @@
             CarryableManager.Remove(this);
         }
 
-        public CarryableSaveDataProxy ToProxy(bool shorten = false)
+        internal CarryableSaveDataProxy ToProxy(bool shorten = false)
         {
             CS state = GetState();
             string data = "";
@@ -104,7 +104,7 @@
             return proxy;
         }
 
-        public void FromProxy(CarryableSaveDataProxy proxy, bool full, bool ignoreAdditionalData = false, bool ignorePosition = false)
+        internal void FromProxy(CarryableSaveDataProxy proxy, bool full, bool ignoreAdditionalData = false, bool ignorePosition = false)
         {
             this.objectName = proxy.name;
             this.type = proxy.type;
@@ -246,7 +246,12 @@
                     Container[] containersAW = this.GetComponentsInChildren<Container>();
                     for (int ii = 0; ii < containersAW.Count(); ii++)
                     {
-                        if (splitData.Length > ii) containersAW[ii].Deserialize(DecompressDeflate(splitData[ii + 1]), null);
+                        if (splitData.Length > ii)
+                        {
+                            // Clear existing decoration items to prevent duplication
+                            containersAW[ii].m_DecorationItems.Clear();
+                            containersAW[ii].Deserialize(DecompressDeflate(splitData[ii + 1]), null);
+                        }
                     }
                     break;
                 case CT.Container:
@@ -254,7 +259,12 @@
                     Container[] containers = this.GetComponentsInChildren<Container>();
                     for (int ii = 0; ii < containers.Count(); ii++)
                     {
-                        if (splitData.Length > ii) containers[ii].Deserialize(DecompressDeflate(splitData[ii]), null);
+                        if (splitData.Length > ii)
+                        {
+                            // Clear existing decoration items to prevent duplication
+                            containers[ii].m_DecorationItems.Clear();
+                            containers[ii].Deserialize(DecompressDeflate(splitData[ii]), null);
+                        }
                     }
                     break;
                 default:
