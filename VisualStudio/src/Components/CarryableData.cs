@@ -1,5 +1,4 @@
 ﻿using Il2CppTLD.ModularElectrolizer;
-using Unity.VisualScripting;
 
 namespace SCPlus
 {
@@ -143,7 +142,7 @@ namespace SCPlus
 
         public static string[] blacklist = new string[]
         {
-            "CONTAINER_CacheStoreCommon",
+            "CONTAINER_CacheStoreCommon"
         };
         
         public static string[] skipLayerChange = new string[] // startswith

@@ -10,6 +10,11 @@
         {
             internal static void Postfix(ref DecorationItem __instance)
             {
+                if (__instance.gameObject.GetComponentInParent<NarrativeCollectibleItem>(true))// id card fix
+                { 
+                    return;
+                }
+
                 string name = SanitizeObjectName(__instance.name);
 
                 if (CarryableData.blacklist.Contains(name))
@@ -170,6 +175,10 @@
             internal static bool Prefix(ref DecorationItem __instance)
             {
                 //if (!__instance.isActiveAndEnabled) return;
+                if (__instance.gameObject.GetComponentInParent<NarrativeCollectibleItem>(true))// id card fix
+                {
+                    return true;
+                }
 
                 SCPMain.DisableNormalInteraction(__instance);
 
@@ -223,7 +232,10 @@
         {
             internal static void Postfix(ref DecorationItem __instance)
             {
-
+                if (__instance.gameObject.GetComponentInParent<NarrativeCollectibleItem>(true))// id card fix
+                {
+                    return;
+                }
                 SCPMain.RestoreNormalInteraction(__instance);
             }
         }
@@ -325,6 +337,10 @@
         {
             internal static void Prefix(ref Placeable __instance)
             {
+                if (__instance.gameObject.GetComponentInParent<NarrativeCollectibleItem>(true))// id card fix
+                {
+                    return;
+                }
                 if (!injectPdids) return;
 
                 if (__instance.GetComponent<ObjectGuid>())

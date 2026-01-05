@@ -235,7 +235,8 @@ namespace SCPlus
                     }
 
                     bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight && !SCPMain.decorationJustDuped;
-                    
+                    bool isFromInventory = di.gameObject.scene.name == "DontDestroyOnLoad" || GameManager.GetInventoryComponent().m_DecorationItems.Contains(di);
+
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
                     
                     if (c.Length > 0)
@@ -246,11 +247,9 @@ namespace SCPlus
                             if (shouldCalculateWeight)
                             {
                                 CarryableData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
-
-                                //if (!SCPMain.skipWeightCalculationForContainer) continue;
                             }
 
-                            if (SCPMain.decorationJustDuped)
+                            if (SCPMain.decorationJustDuped || isFromInventory)
                             {
                                 cc.MakeEmpty();
                             }
@@ -313,7 +312,6 @@ namespace SCPlus
                             offset = od.placementOffset;
                         }
                     }
-
                 }
 
                 return true;
@@ -470,6 +468,28 @@ namespace SCPlus
                 return true;
             }
         }
-    }
+        
+        [HarmonyPatch(typeof(Panel_Container), nameof(Panel_Container.OnContainerToInventory))]
+        private static class PreventTakingUnfinishedDecorations
+        {
+            internal static bool Prefix(ref Panel_Container __instance)
+            {
+                var item = __instance.GetCurrentlySelectedItem();
+                
+                if (!item.m_DecorationItem)
+                {
+                    return true;
+                }
 
+                if (item.m_DecorationItem.GetComponent<InProgressCraftItem>())
+                {
+                    GameAudioManager.PlayGUIError();
+                    HUDMessage.AddMessage(Localization.Get("Gameplay_DecorationNotAllowedInInventory"), false, true);
+                    return false;
+                }
+
+                return true;
+            }
+        }
+    }
 }

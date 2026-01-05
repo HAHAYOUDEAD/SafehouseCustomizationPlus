@@ -54,12 +54,16 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.40.0" />
-      <PackageReference Include="STBlade.Modding.TLD.LocalizationUtilities" Version="2.0.0" />
-      <PackageReference Include="stblade.Modding.TLD.ModData" Version="1.5.1" />
+      <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.51.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <Reference Include="ModComponent">
+        <HintPath>..\..\SteamLibrary\steamapps\common\TheLongDark\Mods\ModComponent.dll</HintPath>
+      </Reference>
+      <Reference Include="ModData">
+        <HintPath>..\..\SteamLibrary\steamapps\common\TheLongDark\Mods\ModData.dll</HintPath>
+      </Reference>
       <Reference Include="ModSettings">
         <HintPath>C:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModSettings.dll</HintPath>
       </Reference>

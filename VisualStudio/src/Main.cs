@@ -226,7 +226,7 @@ namespace SCPlus
 
             if (CarryableData.decorationOverrideData.ContainsKey(name) && CarryableData.decorationOverrideData[name].weight != 0f)
             {
-                weight = CarryableData.decorationOverrideData[name].weight;
+                weight = CarryableData.decorationOverrideData[name].weight * Settings.options.globalWeightModifier;
             }
             else if (di.name.ToLower().StartsWith("obj_curtain"))
             {
@@ -272,6 +272,8 @@ namespace SCPlus
 
                 weight = Mathf.Round(volume * weight * 100f / 25f) * 25f / 100f; //round to 0.25
                 weight = Mathf.Clamp(weight, 0.1f, 30f);
+                weight *= Settings.options.autoWeightMultiplier;
+                weight *= Settings.options.globalWeightModifier;
 
                 Log(CC.Blue, $"Approx. for {name}: weight: {weight}, volume: {volume}");
 

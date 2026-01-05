@@ -11,7 +11,8 @@ global using Il2CppTLD.Utility;
 global using Il2CppVLB;
 global using LocalizationUtilities;
 global using MelonLoader;
-global using MelonLoader.TinyJSON;
+//global using MelonLoader.TinyJSON;
+global using TLD.TinyJSON;
 global using ModData;
 global using System;
 global using System.Collections;
@@ -116,7 +117,7 @@ namespace SCPlus
     }
     internal static class Utility
     {
-        public const string modVersion = "1.9.3";
+        public const string modVersion = "1.9.4";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 

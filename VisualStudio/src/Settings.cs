@@ -72,7 +72,7 @@ namespace SCPlus
         public bool doWeightCalculation = true;
 
         [Name("Weight multiplier")]
-        [Description("Adjust weight approximation to your liking\n\nDefault: 1")]
+        [Description("Adjust weight approximation to your liking (updated on newly acquired items or after game restart)\n\nDefault: 1")]
         [Slider(0.1f, 2f, 20)]
         public float autoWeightMultiplier = 1f;
 
@@ -129,9 +129,14 @@ namespace SCPlus
         [Description("Duplicate decoration item under your crosshair")]
         public KeyCode dupeKey = KeyCode.None;
 
-        [Name("Ignore weight")]
+        [Name("Ignore weight when placing")]
         [Description("Ignore decoration weight while placing")]
         public bool ignorePlaceWeight = false;
+
+        [Name("Global weight modifier")]
+        [Description("Updated on newly acquired items or after game restart")]
+        [Slider(0f, 1f, 11)]
+        public float globalWeightModifier = 1f;
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
         {
