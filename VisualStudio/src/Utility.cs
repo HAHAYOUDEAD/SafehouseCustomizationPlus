@@ -117,7 +117,7 @@ namespace SCPlus
     }
     internal static class Utility
     {
-        public const string modVersion = "1.9.4";
+        public const string modVersion = "1.9.5";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -134,6 +134,8 @@ namespace SCPlus
         public static ModDataManager dataManager = new ModDataManager(modName);
         public static readonly string fireSaveDataTag = "fireBarrels";
         public static readonly string movablesSaveDataTag = "carryables";
+
+        public const string travoisName = "INTERACTIVE_Travois";
 
         public static PlaceMeshRules genericPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects;
         public static PlaceMeshRules boxPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects | PlaceMeshRules.AllowStacking;
@@ -159,7 +161,8 @@ namespace SCPlus
             {
                 Melon<SCPMain>.Logger.Msg(color, message);
             }
-        }
+        }        
+
         public static bool IsScenePlayable()
         {
             return !(string.IsNullOrEmpty(GameManager.m_ActiveScene) || GameManager.m_ActiveScene.Contains("MainMenu") || GameManager.m_ActiveScene == "Boot" || GameManager.m_ActiveScene == "Empty");
@@ -350,10 +353,16 @@ namespace SCPlus
             return s;
         }
 
-        public static string TryGetGuid(GameObject go)
+        public static string TryGetGuidFromDecorationRoot(GameObject go)
         {
-            ObjectGuid og = GetRealParent(go.transform).GetComponentInChildren<ObjectGuid>();
-            return og ? og.GetPDID() : "";
+            //ObjectGuid og = GetRealParent(go.transform).GetComponentInChildren<ObjectGuid>();
+            string guid = "";
+            foreach(var og in GetRealParent(go.transform).GetComponentsInChildren<ObjectGuid>())
+            {
+                if (og.gameObject.GetComponent<Fire>()) continue;
+                guid = og.GetPDID();
+            }
+            return guid;
         }
 
         public static Scene[] GetLoadedScenes()

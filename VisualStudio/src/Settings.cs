@@ -123,6 +123,10 @@ namespace SCPlus
         [Slider(2, 100)]
         public int carryableProcessingInterval = 10;
 
+        [Section("Spooky")]
+        [Name("Allow to move corpses")]
+        [Description("But why?")]
+        public bool allowMoveCorpses = false;
 
         [Section("Cheats")]
         [Name("Duplicate")]

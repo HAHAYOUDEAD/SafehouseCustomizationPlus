@@ -32,13 +32,29 @@ namespace SCPlus
                 }
                 return true;
             }
-        }
+        }        
+
 
 
         [HarmonyPatch(typeof(Container), nameof(Container.Deserialize))]
         private static class InitDecoInContainers
         {
-            internal static void Postfix(ref Container __instance)
+            private static HashSet<DecorationItem> earlyInitList = [];
+            internal static void Prefix(Container __instance)
+            {
+                if (__instance.transform.root.name.Contains(travoisName))
+                { 
+                    foreach (var d in __instance.m_DecorationItems)
+                    {
+                        earlyInitList.Add(d);
+                    }
+                }
+                else
+                {
+                    earlyInitList.Clear();
+                }
+            }
+            internal static void Postfix(Container __instance)
             {
                 foreach (var deco in __instance.m_DecorationItems)
                 {
@@ -57,6 +73,13 @@ namespace SCPlus
                                 bd.m_AllowEditModePlacement = true;
                             }
                         }
+                    }
+                }
+                if (earlyInitList.Count > 0) // readd carryables for late travois initialization
+                {
+                    foreach(var d in earlyInitList)
+                    {
+                        __instance.AddDecorationItem(d);
                     }
                 }
             }
@@ -132,7 +155,7 @@ namespace SCPlus
         {
             internal static bool Prefix(ref BigCarryItem __instance, ref bool __result)
             {
-                if (GameManager.GetSafehouseManager().IsCustomizing() && __instance.name.ToLower().Contains("travois"))
+                if (GameManager.GetSafehouseManager().IsCustomizing() && __instance.name.Contains(travoisName))
                 {
                     GameAudioManager.PlayGUIError();
                     HUDMessage.AddMessage(Localization.Get("SCP_Action_NoTravoisWhenCustomizing"), true, true);
@@ -296,6 +319,16 @@ namespace SCPlus
                             carryable.isInstance = true;
                         }
                         carryable.RetrieveAdditionalData();
+
+                        if (CarryableData.TryGetOrAddFireGuid(di.gameObject, out var og))
+                        {
+                            if (string.IsNullOrEmpty(og?.GetPDID()))
+                            {
+                                PdidTable.RuntimeAddOrReplace(og, Guid.NewGuid().ToString());
+                            }
+                            Log(CC.Gray, $"Adding Fire GUID {og.GetPDID()} to {name}");
+
+                        }
                     }
 
                     if (di.name.ToLower().Contains("curtain"))

@@ -1,7 +1,9 @@
-﻿using Il2CppTLD.ModularElectrolizer;
+﻿using Il2CppInterop.Runtime.Attributes;
+using Il2CppTLD.ModularElectrolizer;
 
 namespace SCPlus
 {
+    
     internal class CarryableSaveDataProxy
     {
         public CS state = 0;
@@ -15,6 +17,7 @@ namespace SCPlus
         public Quaternion currentRot;
         public string dataToSave = "";
         public string guid = "";
+        public string guidFire = "";
         public string containerGuid = "";
         public int containerIndex = 0; // +1
         //public bool onPlayer = false;
@@ -25,9 +28,11 @@ namespace SCPlus
             return nativeScene.Contains(currentScene);
         }
 
-        public Container? TryGetContainer()
+        public bool TryGetContainer(out Container? c)
         {
-            if (string.IsNullOrEmpty(containerGuid) || containerGuid == missingGuid) return null;
+            c = null;
+
+            if (string.IsNullOrEmpty(containerGuid) || containerGuid == missingGuid) return false;
 
             if (containerIndex > 0)
             { 
@@ -37,15 +42,15 @@ namespace SCPlus
                 {
                     Container[] containers = root.GetComponentsInChildren<Container>(false);
                     if (containers.Length >= containerIndex)
-                    { 
-                        return containers[containerIndex - 1];
+                    {
+                        c = containers[containerIndex - 1];
+                        return true;
                     }
                 }
-
-                else return null;
+                else return false;
             }
-
-            return PdidTable.GetGameObject(containerGuid)?.GetComponent<Container>();
+            c = PdidTable.GetGameObject(containerGuid)?.GetComponent<Container>();
+            return c != null;
         }
     }
 
@@ -100,8 +105,25 @@ namespace SCPlus
             Dismantled = 4,
             InContainer = 8,
             ExistingDecoration = 16,
-            Surplus = 32
+            Surplus = 32 // duped or spawned with console
         }
+
+        public static bool TryGetOrAddFireGuid(GameObject go, out ObjectGuid? og)
+        {
+            var fire = go.GetComponentInChildren<Fire>();
+            og = null;
+
+            if (fire)
+            {
+                og = fire.GetOrAddComponent<ObjectGuid>();
+                var s = og.m_Guid;
+                
+                return true;
+            }
+            return false;
+        }
+
+
 
         public static SCPlusCarryable? SetupCarryable(DecorationItem di, bool enlist)
         {
@@ -125,6 +147,8 @@ namespace SCPlus
                     }
                     if (string.IsNullOrEmpty(carryable.nativeScene)) carryable.nativeScene = di.gameObject.scene.name;
                     carryable.type = entry.Value.type;
+
+                    // fire
 
                     if (enlist)
                     {
@@ -206,6 +230,8 @@ namespace SCPlus
             {"OBJ_CurtainStage_Prefab", new() { weight = 10f } },
             {"OBJ_ClothesHanger_Prefab", new() { weight = 0.1f }},
             {"CONTAINER_LockBoxB", new() { weight = 0.8f } },
+            {"CONTAINER_LockerA", new() { weight = 10f } },
+            {"CONTAINER_FirstAidKit", new() { weight = 1.0f } },
         };
 
         public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)

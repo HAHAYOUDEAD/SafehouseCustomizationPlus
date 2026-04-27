@@ -6,6 +6,7 @@ using Il2CppSteamworks;
 using Il2CppTLD.OptionalContent;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using Il2CppTLD.BigCarry;
+using static Il2Cpp.Utils;
 
 namespace SCPlus
 {
@@ -224,9 +225,12 @@ namespace SCPlus
             string name = SanitizeObjectName(di.name);
             bool change = true;
 
+            string logLine = "Calculated";
+
             if (CarryableData.decorationOverrideData.ContainsKey(name) && CarryableData.decorationOverrideData[name].weight != 0f)
             {
                 weight = CarryableData.decorationOverrideData[name].weight * Settings.options.globalWeightModifier;
+                logLine = "Preset";
             }
             else if (di.name.ToLower().StartsWith("obj_curtain"))
             {
@@ -235,6 +239,7 @@ namespace SCPlus
             else if (autoWeightTable.ContainsKey(name))
             {
                 weight = autoWeightTable[name];
+                logLine = "Precalculated";
             }
             else if (Settings.options.doWeightCalculation)
             {
@@ -265,9 +270,9 @@ namespace SCPlus
                     if (di.name.ToLower().Contains("computer")) weight *= 0.5f;
                     if (di.name.ToLower().Contains("lamp")) weight *= 0.25f;
                 }
-                foreach (Collider c in di.GetComponentsInChildren<Collider>())
+                foreach (var mf in di.GetComponentsInChildren<MeshFilter>())
                 {
-                    volume += c.bounds.GetVolumeCubic();
+                    volume += mf.sharedMesh.bounds.GetVolumeCubic();
                 }
 
                 weight = Mathf.Round(volume * weight * 100f / 25f) * 25f / 100f; //round to 0.25
@@ -275,14 +280,17 @@ namespace SCPlus
                 weight *= Settings.options.autoWeightMultiplier;
                 weight *= Settings.options.globalWeightModifier;
 
-                Log(CC.Blue, $"Approx. for {name}: weight: {weight}, volume: {volume}");
-
                 autoWeightTable.Add(name, weight);
             }
             else 
             { 
                 change = false;
+                logLine = "No change";
+                weight = di.m_Weight.ToQuantity(1f);
+                volume = -1f;
             }
+
+            if (logLine != "Precalculated") Log(CC.DarkGray, $"{logLine} for {name}: weight: {weight}, volume: {volume}");
 
             if (change) di.m_Weight = ItemWeight.FromKilograms(weight); 
 

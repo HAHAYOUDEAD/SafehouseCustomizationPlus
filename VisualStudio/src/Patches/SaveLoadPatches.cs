@@ -176,14 +176,16 @@ namespace SCPlus
                         if ((data.state & CS.OnPlayer) != 0) // in inventory
                         {
                             //dupes when changing scene
-                            Log(CC.Gray, $"Instantiating {data.name} in inventory | native: {data.nativeScene} current: {data.currentScene}");
+                            Log(CC.Yellow, $"Instantiating {data.name} in inventory | native: {data.nativeScene} current: {data.currentScene}");
                             GameManager.GetInventoryComponent().AddDecoration(di);
                             instance.SetActive(false);
                         }
-                        else if (data.TryGetContainer()) // in container
+                        else if (data.TryGetContainer(out var c)) // in container
                         {
-                            Log(CC.Gray, $"Instantiating {data.name} in container | native: {data.nativeScene} current: {data.currentScene}");
-                            data.TryGetContainer().AddDecorationItem(di);
+                            string name = GetRealParent(c.transform).name;
+                            if (name == c.name) name = c.transform.root.name; // mainly for travois
+                            Log(CC.Green, $"Instantiating {data.name} in container {name} | native: {data.nativeScene} current: {data.currentScene}");
+                            c.AddDecorationItem(di);
                             instance.SetActive(false);
                         }
                         else // in scene

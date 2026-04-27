@@ -1,4 +1,6 @@
-﻿namespace SCPlus
+﻿using Il2CppInterop.Runtime.Attributes;
+
+namespace SCPlus
 {
     [RegisterTypeInIl2Cpp]
     internal class SCPlusLargeObject : MonoBehaviour
@@ -27,6 +29,7 @@
             CarryableManager.Remove(this);
         }
 
+        [HideFromIl2Cpp]
         public CarryableSaveDataProxy ToProxy(bool shorten = false)
         {
             CS state = GetState();
@@ -42,6 +45,8 @@
             }
 
             CarryableSaveDataProxy proxy;
+
+
             if (shorten)
             {
                 proxy = new()
@@ -49,16 +54,16 @@
                     name = this.objectName,
                     type = this.type,
                     dataToSave = data,
-                    guid = TryGetGuid(this.gameObject),
+                    guid = TryGetGuidFromDecorationRoot(this.gameObject),
                     state = CS.ExistingDecoration,
                 };
             }
             else
             {
                 string containerGuid = "";
-                int containerIndex = 0;
+                int containerIndex = 0; // not in container
 
-                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c)) 
+                if (!this.gameObject.active && this.transform.parent.TryGetComponentInParent(out Container c))  // is in container
                 {
                     if (c.TryGetGuid(out string foundGuid))
                     {
@@ -66,11 +71,12 @@
                     }
                     else
                     {
-                        if (c.gameObject.TryGetComponentInParent(out ObjectGuid og))
+                        string guid = TryGetGuidFromDecorationRoot(c.transform.parent.gameObject);
+                        if (!string.IsNullOrEmpty(guid))
                         {
-                            containerGuid = og.PDID;
+                            containerGuid = guid;
 
-                            Container[] cc = og.GetComponentsInChildren<Container>(false);
+                            Container[] cc = c.transform.parent.GetComponentsInChildren<Container>(false);
                             for (int i = 0; i < cc.Length; i++)
                             {
                                 if (cc[i] == c)
@@ -101,9 +107,14 @@
                     state = state,
                 };
             }
+            if (CarryableData.TryGetOrAddFireGuid(this.gameObject, out var og))
+            {
+                proxy.guidFire = og ? og.GetPDID() : "";
+            }
+
             return proxy;
         }
-
+        [HideFromIl2Cpp]
         public void FromProxy(CarryableSaveDataProxy proxy, bool full, bool ignoreAdditionalData = false, bool ignorePosition = false)
         {
             this.objectName = proxy.name;
@@ -117,6 +128,20 @@
                 if (!ignorePosition) this.transform.position = proxy.currentPos;
                 if (!ignorePosition) this.transform.rotation = proxy.currentRot;
                 if ((proxy.state & CS.Surplus) != 0) this.isDuped = true;
+            }
+
+            if (CarryableData.TryGetOrAddFireGuid(this.gameObject, out var og))
+            {
+                if (!string.IsNullOrEmpty(proxy.guidFire))
+                {
+                    PdidTable.RuntimeAddOrReplace(og, proxy.guidFire);
+                    Log(CC.Gray, $"Retrieving guid for fire: {og?.GetPDID()}");
+                }
+                else
+                {
+                    PdidTable.RuntimeAddOrReplace(og, Guid.NewGuid().ToString());
+                    Log(CC.Gray, $"Generating guid for fire: {og?.GetPDID()}");
+                }
             }
         }
 
@@ -272,7 +297,17 @@
 
             if (!this.gameObject.activeInHierarchy)
             {
-                if (this.gameObject.scene.name == "DontDestroyOnLoad") state |= CS.OnPlayer;
+                bool inTravois = false;
+                var t = this.transform.parent;
+                while (t != null)
+                {
+                    if (t.name.Contains(travoisName)) inTravois = true;
+                    t = t.parent;
+                }
+
+                // it dupes under travois now but not in actual container so basically is not tracked by sc+ anymore
+
+                if (this.gameObject.scene.name == "DontDestroyOnLoad" && !inTravois) state |= CS.OnPlayer;
 
                 else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer; 
 

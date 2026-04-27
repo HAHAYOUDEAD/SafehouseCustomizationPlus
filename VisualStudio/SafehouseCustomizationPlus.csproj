@@ -3,7 +3,7 @@
 
     <PropertyGroup>
         <!--This needs to be changed for the mod to compile.-->
-        <TheLongDarkPath>E:\SteamLibrary\steamapps\common\TheLongDark</TheLongDarkPath>
+        <TheLongDarkPath>S:\SteamLibrary\steamapps\common\TheLongDark</TheLongDarkPath>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -52,20 +52,21 @@
       <EmbeddedResource Include="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <EmbeddedResource Include="Resources\Localization.json" />
     </ItemGroup>
-
     <ItemGroup>
-      <PackageReference Include="STBlade.Modding.TLD.Il2CppAssemblies.Windows" Version="2.51.0" />
+      <PackageReference Include="Waltz.Modding.TLD.Il2CppAssemblies.Windows" Version="2.52.0" />
     </ItemGroup>
-
     <ItemGroup>
+      <Reference Include="DynamicTemperature">
+        <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\DynamicTemperature.dll</HintPath>
+      </Reference>
       <Reference Include="ModComponent">
-        <HintPath>..\..\SteamLibrary\steamapps\common\TheLongDark\Mods\ModComponent.dll</HintPath>
+        <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModComponent.dll</HintPath>
       </Reference>
       <Reference Include="ModData">
-        <HintPath>..\..\SteamLibrary\steamapps\common\TheLongDark\Mods\ModData.dll</HintPath>
+        <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModData.dll</HintPath>
       </Reference>
       <Reference Include="ModSettings">
-        <HintPath>C:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModSettings.dll</HintPath>
+        <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModSettings.dll</HintPath>
       </Reference>
     </ItemGroup>
 	

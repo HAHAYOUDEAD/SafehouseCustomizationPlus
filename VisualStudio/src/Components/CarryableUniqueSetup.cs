@@ -85,8 +85,6 @@ namespace SCPlus
             //cookingPointIndicator.transform.parent = go.transform;
             cookingPointIndicator.transform.localPosition = Vector3.zero;
 
-            GameObject.Destroy(fireDonor);
-
             fireRoot.localPosition = new Vector3(0.06f, 0f, 0.001f);
             Vector3 firePosition = new Vector3(0, 0.2f, -0.2f);
             foreach (Transform t in fireRoot.GetComponentsInChildren<Transform>(true))
@@ -94,7 +92,7 @@ namespace SCPlus
                 if (t.name.ToLower().StartsWith("fx_stage"))
                 {
                     t.localPosition = firePosition;
-                    t.localScale = new Vector3(2f, 0.4f, 1f);
+                    t.localScale = new Vector3(2f, 0.1f, 1f);
                     t.Find("Flame core 2")?.gameObject.SetActive(false);
                 }
             }
@@ -140,7 +138,7 @@ namespace SCPlus
             foreach (GameObject p in points)
             {
                 GearPlacePoint gpp = p.AddComponent<GearPlacePoint>();
-                gpp.m_AuthorizedGearPrefabs = new();
+                gpp.m_AllowedGear = new();
                 gpp.m_AllowAllCookingItems = true;
                 gpp.m_FireToAttach = fire;
 
@@ -157,6 +155,7 @@ namespace SCPlus
             }
 
             GameObject.Destroy(cookingPointIndicator);
+            GameObject.Destroy(fireDonor);
 
             PlacePoints pp = placePointRoot.gameObject.AddComponent<PlacePoints>();
             pp.m_PlacePoints = indicators.ToArray();
@@ -164,7 +163,7 @@ namespace SCPlus
             ws.m_CookingSlots = css.ToArray();
             ws.enabled = true;
 
-            GameObject goa = Resources.Load<GameObject>("Assets/PrefabInstance/INTERACTIVE_StoveWoodC_LOD0");
+            //GameObject goa = Resources.Load<GameObject>("Assets/PrefabInstance/INTERACTIVE_StoveWoodC_LOD0");
 
             go.active = true;
 

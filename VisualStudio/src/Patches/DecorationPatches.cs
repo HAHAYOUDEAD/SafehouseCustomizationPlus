@@ -46,6 +46,13 @@
 
                 if (!__instance.m_AllowInInventory)
                 {
+                    if (__instance.name.StartsWith("CORPSE") && !Settings.options.allowMoveCorpses)
+                    {
+                        __instance.m_AllowInInventory = false;
+                        bd.m_AllowEditModePlacement = false;
+                        goto skip;
+                    }
+
                     __instance.m_AllowInInventory = true;
 
                     SCPMain.RelevantSetupForDecorationItem(__instance, true);
@@ -55,7 +62,7 @@
                         bd.m_AllowEditModePlacement = true;
                     }
                 }
-
+            skip:
                 SCPMain.SetLayersToInteractiveProp(__instance);
 
 
