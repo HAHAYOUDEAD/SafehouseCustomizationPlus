@@ -3,7 +3,6 @@ using Il2CppTLD.ModularElectrolizer;
 
 namespace SCPlus
 {
-    
     internal class CarryableSaveDataProxy
     {
         public CS state = 0;
@@ -33,11 +32,9 @@ namespace SCPlus
             c = null;
 
             if (string.IsNullOrEmpty(containerGuid) || containerGuid == missingGuid) return false;
-
             if (containerIndex > 0)
             { 
                 GameObject root = PdidTable.GetGameObject(containerGuid);
-
                 if (root != null)
                 {
                     Container[] containers = root.GetComponentsInChildren<Container>(false);
@@ -54,7 +51,6 @@ namespace SCPlus
         }
     }
 
-
     internal class ObjectToModify
     {
         public CT type = CT.Basic;
@@ -64,6 +60,7 @@ namespace SCPlus
         public bool existingDecoration = false;
         //public bool alwaysReplaceAfterFirstInteraction = false;
         public bool pickupable = true; // can't dupe/spawn if false
+        public PlaceMeshRules placeRules = genericPlacementRules;
     }
 
     internal class OverrideData
@@ -93,7 +90,8 @@ namespace SCPlus
             AmmoWorkbench,
             MillingMachine,
             FlareGunCase,
-            Container
+            Container, 
+            FuelLantern
         }
 
         [Flags]
@@ -105,9 +103,11 @@ namespace SCPlus
             Dismantled = 4,
             InContainer = 8,
             ExistingDecoration = 16,
-            Surplus = 32 // duped or spawned with console
+            Surplus = 32, // duped or spawned with console
+            InTravois = 64
         }
 
+        public static AssetBundle sneakyBundle = null!;
         public static bool TryGetOrAddFireGuid(GameObject go, out ObjectGuid? og)
         {
             var fire = go.GetComponentInChildren<Fire>();
@@ -123,11 +123,8 @@ namespace SCPlus
             return false;
         }
 
-
-
         public static SCPlusCarryable? SetupCarryable(DecorationItem di, bool enlist)
         {
-
             foreach (var entry in CarryableData.carryablePrefabDefinition)
             {
                 if (di.name.ToLower().Contains(entry.Key.ToLower()))
@@ -202,14 +199,13 @@ namespace SCPlus
             {"INTERACTIVE_IndustrialMillingMachine", new() {assetPath = "Assets/ArtAssets/Env/Objects/OBJ_IndustrialMillingMachine/OBJ_IndustrialMillingMachine_Prefab.prefab", type = CT.MillingMachine} },
 
             // misc
+            {"INTERACTIVE_TunnelLantern_Prefab", new() {assetPath = "", type = CT.FuelLantern, needsReconstruction = true, reconstructAction = () => ReconstructTunnelLantern()} },
+
             //{"OBJ_GravityToilet", new() {assetPath = "", type = CT.WaterSource, needsReconstruction = true} },
             //OBJ_ChandelierA_Prefab (fbx only and sway animation, ref in campoffice)
             // sink
             // OBJ_ElectricGenerator_A_Prefab
-
-
         };
-      
 
         public static Dictionary<string, OverrideData> decorationOverrideData = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -232,6 +228,7 @@ namespace SCPlus
             {"CONTAINER_LockBoxB", new() { weight = 0.8f } },
             {"CONTAINER_LockerA", new() { weight = 10f } },
             {"CONTAINER_FirstAidKit", new() { weight = 1.0f } },
+            {"INTERACTIVE_TunnelLantern_Prefab", new() { nameLocID = "SCP_Deco_TunnelLantern", weight = 1.0f } },
         };
 
         public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)

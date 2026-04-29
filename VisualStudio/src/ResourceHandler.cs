@@ -21,6 +21,17 @@ namespace SCPlus
             return result;
         }
 
+        public static AssetBundle? LoadEmbeddedAssetBundle(string name)
+        {
+            using (Stream? stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourcesFolder + name))
+            {
+                MemoryStream? memory = new((int)stream.Length);
+                stream!.CopyTo(memory);
+
+                Il2CppSystem.IO.MemoryStream memoryStream = new(memory.ToArray());
+                return AssetBundle.LoadFromStream(memoryStream);
+            };
+        }
         public static void ExtractFolderFromResources(string targetFolder, string resourceFolder, bool overwrite = false)
         {
 

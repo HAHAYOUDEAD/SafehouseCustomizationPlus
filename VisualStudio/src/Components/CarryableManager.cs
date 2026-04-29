@@ -44,6 +44,7 @@
                         if (onPlayer) // saving copy in original scene so object can be removed later
                         {
                             proxy.state &= ~CS.OnPlayer;
+                            proxy.state &= ~CS.InTravois;
                             proxy.state |= CS.Removed;
                         }
 

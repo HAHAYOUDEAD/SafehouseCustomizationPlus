@@ -46,11 +46,13 @@
       <None Remove="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
       <None Remove="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <None Remove="Resources\Localization.json" />
+      <None Remove="Resources\nothingtoseehere" />
     </ItemGroup>
     <ItemGroup>
       <EmbeddedResource Include="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
       <EmbeddedResource Include="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <EmbeddedResource Include="Resources\Localization.json" />
+      <EmbeddedResource Include="Resources\nothingtoseehere" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Waltz.Modding.TLD.Il2CppAssemblies.Windows" Version="2.52.0" />

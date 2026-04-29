@@ -197,6 +197,14 @@ namespace SCPlus
                         data += CompressDeflate(c.Serialize());
                     }
                     break;
+                case CT.FuelLantern:
+                    var ft = this.GetComponentInChildren<SCPlusSimpleFuelTank>();
+                    var il = this.GetComponentInChildren<InteractiveLightsource>();
+                    if (ft && il)
+                    {
+                        data = (il && il.m_IsOn ? "1" : "0") + ft.GetRemainingFuelUnits();
+                    }
+                    break;
                 default:
                     break;
             }
@@ -282,6 +290,18 @@ namespace SCPlus
                         if (splitData.Length > ii) containers[ii].Deserialize(DecompressDeflate(splitData[ii]), null);
                     }
                     break;
+                case CT.FuelLantern:
+                    var ft = this.GetComponentInChildren<SCPlusSimpleFuelTank>();
+                    var il = this.GetComponentInChildren<InteractiveLightsource>();
+                    if (ft)
+                    {
+                        ft.SetRemainingFuelUnits(long.Parse(data.Substring(1)));
+                    }
+                    if (il)
+                    {
+                        il.SetState(data[0] == '1');
+                    }
+                    break;
                 default:
                     break;
             }
@@ -297,19 +317,11 @@ namespace SCPlus
 
             if (!this.gameObject.activeInHierarchy)
             {
-                bool inTravois = false;
-                var t = this.transform.parent;
-                while (t != null)
-                {
-                    if (t.name.Contains(travoisName)) inTravois = true;
-                    t = t.parent;
-                }
+                if (IsInTravois(this.transform)) state |= CS.InTravois;
 
-                // it dupes under travois now but not in actual container so basically is not tracked by sc+ anymore
+                if (this.gameObject.scene.name == "DontDestroyOnLoad") state |= CS.OnPlayer;
 
-                if (this.gameObject.scene.name == "DontDestroyOnLoad" && !inTravois) state |= CS.OnPlayer;
-
-                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer; 
+                else if (this.transform.parent.TryGetComponentInParent(out Container _)) state |= CS.InContainer;
 
                 else state |= CS.Removed;
 

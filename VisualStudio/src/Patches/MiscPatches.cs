@@ -1,13 +1,12 @@
 ﻿using Il2Cpp;
 using Il2CppTLD.BigCarry;
 using Il2CppTLD.UI.Scroll;
+using static Il2Cpp.Utils;
 
 namespace SCPlus
 {
-
     internal class MiscPatches
     {
-        
         [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
         public static class SkipOutline
         {
@@ -34,24 +33,17 @@ namespace SCPlus
             }
         }        
 
-
-
         [HarmonyPatch(typeof(Container), nameof(Container.Deserialize))]
-        private static class InitDecoInContainers
+        public static class InitDecoInContainers
         {
-            private static HashSet<DecorationItem> earlyInitList = [];
+            public static HashSet<DecorationItem> earlyTravoisList = [];
+            public static HashSet<DecorationItem> earlyCarriedTravoisList = [];
             internal static void Prefix(Container __instance)
             {
-                if (__instance.transform.root.name.Contains(travoisName))
-                { 
-                    foreach (var d in __instance.m_DecorationItems)
-                    {
-                        earlyInitList.Add(d);
-                    }
-                }
-                else
+                if (!IsInTravois(__instance.transform))
                 {
-                    earlyInitList.Clear();
+                    earlyTravoisList.Clear();
+                    earlyCarriedTravoisList.Clear();
                 }
             }
             internal static void Postfix(Container __instance)
@@ -75,80 +67,45 @@ namespace SCPlus
                         }
                     }
                 }
-                if (earlyInitList.Count > 0) // readd carryables for late travois initialization
+
+                // readd carryables for late travois initialization
+                if (earlyTravoisList.Count > 0) 
                 {
-                    foreach(var d in earlyInitList)
+                    foreach(var d in earlyTravoisList)
+                    {
+                        __instance.AddDecorationItem(d);
+                    }
+                }                
+                if (earlyCarriedTravoisList.Count > 0)
+                {
+                    foreach(var d in earlyCarriedTravoisList)
                     {
                         __instance.AddDecorationItem(d);
                     }
                 }
             }
         }
-
-        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.Awake))]
-        private static class OutlineThings
+   
+        [HarmonyPatch(typeof(InteractiveLightsource), nameof(InteractiveLightsource.Awake))]
+        private static class TunnelLanternFix
         {
-            internal static void Postfix(ref SafehouseManager __instance)
+            internal static void Postfix(InteractiveLightsource __instance)
             {
-                __instance.m_OutlineColor = outlineColor.HueAdjust(Settings.options.outlineHue).AlphaAdjust(Settings.options.outlineAlpha);
-                __instance.m_OnHoverColor = outlineColor.HueAdjust(Settings.options.outlineHue);
-
-                __instance.m_OnHoverPropertyBlock.SetColor("_Color", __instance.m_OnHoverColor);
-
-                __instance.m_OutlineThickness = Settings.options.outlineThickness;
+                __instance.gameObject.layer = vp_Layer.InteractiveProp; // doesn't affect anything, just sets the layer earlier than the game
             }
-        }
+        }   
 
-        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.StartCustomizing))]
-        private static class AddBall
+        [HarmonyPatch(typeof(InteractiveLightsource), nameof(InteractiveLightsource.PerformInteraction))]
+        private static class TunnelLanternShowFuel
         {
-            internal static void Postfix()
+            internal static void Postfix(InteractiveLightsource __instance)
             {
-                if (Settings.options.outlineVisibility == 1)
+                if (__instance.TryGetComponent<SCPlusSimpleFuelTank>(out var ft))
                 {
-                    GameManager.GetPlayerTransform().gameObject.GetOrAddComponent<SCPlusDecorationDetector>();
+                    InterfaceManager.GetPanel<Panel_Subtitles>().ShowSubtitles(ft.GetRemainingFuelTimeProcessedString(), 8f);
                 }
             }
         }
-        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.StopCustomizing))]
-        private static class RemoveBall
-        {
-            internal static void Postfix()
-            {
-                if (Settings.options.outlineVisibility == 1)
-                {
-                    if (GameManager.GetPlayerTransform().TryGetComponent(out SCPlusDecorationDetector d))
-                    { 
-                        GameObject.Destroy(d);
-                    }
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.InCustomizableSafehouse))]
-        private static class AlwaysCustomizable
-        {
-            internal static void Postfix(ref SafehouseManager __instance, ref bool __result)
-            {
-                __result = true; // if (Settings.options.enableCustomizationAnywhere)
-            }
-        }
-        
-        [HarmonyPatch(typeof(SafehouseManager), nameof(SafehouseManager.TryStartCustomizing))]
-        private static class NoCustomizationWithTravois
-        {
-            internal static bool Prefix(ref SafehouseManager __instance, ref bool __result)
-            {
-                if (GameManager.GetPlayerAnimationComponent().m_Animator.GetCurrentAnimatorClipInfo(0)[0].clip.name.ToLower().Contains("travois"))
-                {
-                    GameAudioManager.PlayGUIError();
-                    HUDMessage.AddMessage(Localization.Get("SCP_Action_NoCustomizationWithTravois"), true, true);
-                    __result = false;
-                    return false;
-                }
-                return true;
-            }
-        } 
 
         [HarmonyPatch(typeof(BigCarryItem), nameof(BigCarryItem.PerformInteraction))]
         private static class NoTravoisWhenCustomizing
@@ -185,7 +142,6 @@ namespace SCPlus
             }
         }
 
-
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetExtraWeightKG))] // 
         private static class AddDecorationToOverallCarriedWeight
         {
@@ -194,244 +150,6 @@ namespace SCPlus
                 if (GameManager.GetPlayerManagerComponent().IsInMeshPlacementMode() && GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem)
                 {
                     __result = ItemWeight.FromKilograms(__result.ToQuantity(1f) + CarryableData.carriedObjectWeight);
-
-
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.StartPlaceMesh), [typeof(GameObject), typeof(float), typeof(PlaceMeshFlags), typeof(PlaceMeshRules)])]
-        private static class ManagePlacement
-        {
-            public static Vector3 offset = Vector3.zero;
-
-            internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace, ref bool __result)
-            {
-                //if (!Settings.options.pickupAnything && !Settings.options.pickupContainers) return true;
-
-                objectToPlace.TryGetComponent(out DecorationItem di);
-
-                if (!di) // for non-vanilla decorations spawned with console
-                {
-                    foreach (var entry in CarryableData.carryablePrefabDefinition)
-                    {
-                        if (objectToPlace.name.ToLower().Contains(entry.Key.ToLower()))
-                        {
-                            di = SCPMain.MakeIntoDecoration(objectToPlace);
-                        }
-                    }
-                }
-
-                if (di)
-                {
-                    string name = SanitizeObjectName(di.name);
-
-                    foreach (Renderer r in di.GetRenderers()) // fix drastic performance drop on some objects
-                    {
-                        if (r)
-                        {
-                            r.enabled = true;
-                            if (r.name.EndsWith("_Shadow"))
-                            {
-                                r.gameObject.active = false;
-                            }
-                        }
-                    }
-
-                    Il2CppSystem.Collections.Generic.List<DecorationItem> children = new();
-                    foreach (DecorationItem child in di.DecorationChildren)
-                    {
-                        if (!child) continue;
-                        child.gameObject.active = true;
-                        children.Add(child);
-                    }
-                    di.m_DecorationChildren = children;
-
-                    WoodStove ws = objectToPlace.GetComponentInChildren<WoodStove>(true);
-                    if (ws && ws.Fire?.IsBurning() == true)
-                    {
-                        GameAudioManager.PlayGUIError();
-                        HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHot"));
-                        __instance.CancelPlaceMesh();
-                        __result = false;
-                        return false;
-                    }
-
-                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight && !SCPMain.decorationJustDuped;
-                    bool isFromInventory = di.gameObject.scene.name == "DontDestroyOnLoad" || GameManager.GetInventoryComponent().m_DecorationItems.Contains(di);
-
-                    Container[] c = objectToPlace.GetComponentsInChildren<Container>();
-                    
-                    if (c.Length > 0)
-                    {
-                        CarryableData.carriedObjectWeight = 0f;
-                        foreach (Container cc in c)
-                        {
-                            if (shouldCalculateWeight)
-                            {
-                                CarryableData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
-                            }
-
-                            if (SCPMain.decorationJustDuped || isFromInventory)
-                            {
-                                cc.MakeEmpty();
-                            }
-                            
-                        }
-                        if (shouldCalculateWeight)
-                        {
-                            CarryableData.carriedObjectWeight += di.Weight.ToQuantity(1f);
-                            Log(CC.Gray, "Moving in-scene container, weight: " + CarryableData.carriedObjectWeight);
-                            float totalCarriedWeight = CarryableData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
-                            if (totalCarriedWeight > GameManager.GetEncumberComponent().GetNoWalkCarryCapacityKG().ToQuantity(1f))
-                            {
-                                GameAudioManager.PlayGUIError();
-                                HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHeavy"));
-                                //SCPMain.decorationJustDuped = false;
-                                __instance.CancelPlaceMesh();
-                                __result = false;
-                                return false;
-                            }
-                        }
-                    }
-                    
-                    else if (shouldCalculateWeight)
-                    {
-                        CarryableData.carriedObjectWeight = di.Weight.ToQuantity(1f);
-                        float totalCarriedWeight = CarryableData.carriedObjectWeight + GameManager.GetEncumberComponent().GetGearWeightKG().ToQuantity(1f);
-                        if (totalCarriedWeight > GameManager.GetEncumberComponent().GetNoWalkCarryCapacityKG().ToQuantity(1f))
-                        {
-                            GameAudioManager.PlayGUIError();
-                            HUDMessage.AddMessage(Localization.Get("SCP_Action_CantMoveHeavy"));
-                            //SCPMain.decorationJustDuped = false;
-                            __instance.CancelPlaceMesh();
-                            __result = false;
-                            return false;
-                        }
-                    }
-
-                    SCPlusCarryable? carryable = CarryableData.SetupCarryable(di, false); // listed in exitmeshplacement
-
-                    if (carryable != null)
-                    {
-                        if (SCPMain.decorationJustDuped)
-                        { 
-                            carryable.isInstance = true;
-                        }
-                        carryable.RetrieveAdditionalData();
-
-                        if (CarryableData.TryGetOrAddFireGuid(di.gameObject, out var og))
-                        {
-                            if (string.IsNullOrEmpty(og?.GetPDID()))
-                            {
-                                PdidTable.RuntimeAddOrReplace(og, Guid.NewGuid().ToString());
-                            }
-                            Log(CC.Gray, $"Adding Fire GUID {og.GetPDID()} to {name}");
-
-                        }
-                    }
-
-                    if (di.name.ToLower().Contains("curtain"))
-                    {
-                        di.name = name;
-                    }
-
-                    offset = Vector3.zero;
-
-                    if (CarryableData.decorationOverrideData.TryGetValue(name, out OverrideData? od))
-                    {
-                        if (od.placementOffset != Vector3.zero)
-                        {
-                            offset = od.placementOffset;
-                        }
-                    }
-                }
-
-                return true;
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.UpdatePlaceMesh))]
-        private static class PlacementOffset
-        {
-            internal static void Postfix(ref PlayerManager __instance)
-            {
-                if (ManagePlacement.offset != Vector3.zero && __instance.IsInMeshPlacementMode() && __instance.m_ObjectToPlace != null)
-                {
-                    __instance.m_ObjectToPlace.transform.position += ManagePlacement.offset;
-                }
-            }
-        }
-
-
-        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.AttemptToPlaceMesh))]
-        private static class ResetOffset
-        {
-            internal static void Prefix(ref PlayerManager __instance)
-            {
-                if (__instance.CanPlaceCurrentPlaceable())
-                {
-                    ManagePlacement.offset = Vector3.zero;
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.DoPositionCheck))]
-        private static class OverridePositionCheck
-        { 
-            internal static void Postfix(ref PlayerManager __instance, ref MeshLocationCategory __result)
-            {
-                if (!__instance.m_ObjectToPlaceDecorationItem) return;
-
-                if (InputManager.GetSprintDown(InputManager.m_CurrentContext) &&
-                   (__result != MeshLocationCategory.Valid ||
-                    __result != MeshLocationCategory.ValidOutOfRange ||
-                    __result != MeshLocationCategory.ValidOutOfRangeFar))
-                {
-                    float distance = Vector3.Distance(__instance.m_ObjectToPlace.transform.position, GameManager.GetPlayerTransform().position);
-                    if (distance > __instance.m_PlacementDistanceFar)
-                    {
-                        __result = MeshLocationCategory.ValidOutOfRangeFar;
-                        return;
-                    }
-                    else if (distance > __instance.m_PlacementDistance)
-                    {
-                        __result = MeshLocationCategory.ValidOutOfRange;
-                        return;
-                    }
-
-                    __result = MeshLocationCategory.Valid;
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.ExitMeshPlacement))]
-        private static class ExitPlacement
-        {
-            static DecorationItem di;
-            internal static void Prefix(ref PlayerManager __instance)
-            {
-                di = __instance.m_ObjectToPlaceDecorationItem;
-                //ManagePlacement.offset = Vector3.zero;
-            }
-            internal static void Postfix()
-            {
-                SCPMain.decorationJustDuped = false;
-
-                if (di?.isActiveAndEnabled == true)
-                {
-                    foreach (Renderer r in di.GetRenderers()) // reset shadow mesh
-                    {
-                        if (r)
-                        {
-                            if (r.name.EndsWith("_Shadow"))
-                            {
-                                r.gameObject.active = true;
-                            }
-                        }
-                    }
-                    di.TryGetComponent(out SCPlusCarryable carryable);
-                    if (carryable) CarryableManager.Add(carryable);
                 }
             }
         }
@@ -455,7 +173,6 @@ namespace SCPlus
                 }
             }
         }
-
 
         [HarmonyPatch(typeof(ItemDescriptionPage), nameof(ItemDescriptionPage.UpdateDecorationItemDescription))]
         private static class ChangeCarryableInventoryLabel

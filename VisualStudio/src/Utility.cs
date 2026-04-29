@@ -139,12 +139,16 @@ namespace SCPlus
 
         public static PlaceMeshRules genericPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects;
         public static PlaceMeshRules boxPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowFloorPlacement | PlaceMeshRules.IgnoreCloseObjects | PlaceMeshRules.AllowStacking;
+        public static PlaceMeshRules wallPlacementRules = PlaceMeshRules.Default | PlaceMeshRules.AllowWallPlacement | PlaceMeshRules.IgnoreCloseObjects;
 
         public static readonly string missingGuid = "MISSING GUID";
 
         public static int childrenLookupCoroutineRunning = 0;
 
         public static readonly Color outlineColor = new Color(0.25f, 0.5f, 1f);
+
+        public static Shader standardShader = Shader.Find("Shader Forge/TLD_StandardDiffuse");
+        public static Shader transparentShader = Shader.Find("Shader Forge/TLD_StandardTransparent");
 
 
         public enum LayerMask
@@ -432,105 +436,111 @@ namespace SCPlus
 
         public static bool FindCarryableAtPosition(string targetName, Vector3 position, float radius, out GameObject? go)
         {
+            //MelonLogger.Msg(CC.Red, $"Looking for {targetName} at {position} with radius {radius}");
             Collider[] hits = Physics.OverlapSphere(position, radius, (int)LayerMask.PossibleDecoration);
 
             foreach (var hit in hits)
             {
-                ///MelonLogger.Msg(hit.transform.name);
+                //MelonLogger.Msg(CC.Red, "found" + hit.transform.name);
                 if (TryGetCarryableRoot(hit.transform, out GameObject? parent))
                 {
                     if (SanitizeObjectName(parent.name).ToLower().Contains(targetName.ToLower()))
                     {
-                        //MelonLogger.Msg(parent.name + " contains " + targetName);
+                        //MelonLogger.Msg(CC.Red, parent.name + " contains " + targetName);
                         go = parent;
                         return true;
                     }
                 }
-
-
             }
             go = null;
             return false;
         }
 
 
-
-
-
-        /*
-        [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
-        private static class dfhdfghg
+        public static bool IsInTravois(Transform t)
         {
-            internal static void Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, MaterialPropertyBlock propertyBlock)
+            while (t.parent)
             {
-                if (renderers.Count > 0) PrintShaderProperties(renderers[0].material, propertyBlock);
+                if (t.parent.name.Contains(travoisName)) return true;
+                t = t.parent;
             }
+            return false;
         }
 
-
-        
-        public static void PrintShaderProperties(Material mat, MaterialPropertyBlock mpb)
-        {
-            Shader shader = mat.shader;
-            int count = shader.GetPropertyCount();
-
-            Log(CC.Yellow, $"\nShader: {shader.name}, Property count: {count}");
-
-            for (int i = 0; i < count; i++)
+            /*
+            [HarmonyPatch(typeof(Il2Cpp.Utils), nameof(Il2Cpp.Utils.ApplyPropertyBlockToRenderers))]
+            private static class dfhdfghg
             {
-                string name = shader.GetPropertyName(i);
-                ShaderPropertyType type = shader.GetPropertyType(i);
-
-                string valueStr = "Unknown";
-                string mpbValueStr = "Unknown";
-
-                switch (type)
+                internal static void Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, MaterialPropertyBlock propertyBlock)
                 {
-                    case ShaderPropertyType.Color:
-                        valueStr = mat.GetColor(name).ToString();
-                        mpbValueStr = mpb.GetColor(name).ToString();
-                        break;
-                    case ShaderPropertyType.Vector:
-                        valueStr = mat.GetVector(name).ToString();
-                        mpbValueStr = mpb.GetVector(name).ToString();
-                        break;
-                    case ShaderPropertyType.Float:
-                    case ShaderPropertyType.Range:
-                        valueStr = mat.GetFloat(name).ToString();
-                        mpbValueStr = mpb.GetFloat(name).ToString();
-                        break;
-                    case ShaderPropertyType.Texture:
-                        Texture tex = mat.GetTexture(name);
-                        Texture mpbtex = mpb.GetTexture(name);
-                        valueStr = tex ? tex.name : "None";
-                        mpbValueStr = mpbtex ? mpbtex.name : "None";
-                        break;
+                    if (renderers.Count > 0) PrintShaderProperties(renderers[0].material, propertyBlock);
                 }
-
-                Log(CC.Gray, $"Property {i}: {name} ({type}) = {valueStr}");
-                Log(CC.White, $"    Property {i}: {name} ({type}) = {mpbValueStr}");
             }
 
-            for (int n = -5; n < 400; n++)
+
+
+            public static void PrintShaderProperties(Material mat, MaterialPropertyBlock mpb)
             {
-                if (mpb.HasColor(n))
+                Shader shader = mat.shader;
+                int count = shader.GetPropertyCount();
+
+                Log(CC.Yellow, $"\nShader: {shader.name}, Property count: {count}");
+
+                for (int i = 0; i < count; i++)
                 {
-                    Log(CC.Green, $"Found Color property #{n}: {mpb.GetColor(n)}");
+                    string name = shader.GetPropertyName(i);
+                    ShaderPropertyType type = shader.GetPropertyType(i);
+
+                    string valueStr = "Unknown";
+                    string mpbValueStr = "Unknown";
+
+                    switch (type)
+                    {
+                        case ShaderPropertyType.Color:
+                            valueStr = mat.GetColor(name).ToString();
+                            mpbValueStr = mpb.GetColor(name).ToString();
+                            break;
+                        case ShaderPropertyType.Vector:
+                            valueStr = mat.GetVector(name).ToString();
+                            mpbValueStr = mpb.GetVector(name).ToString();
+                            break;
+                        case ShaderPropertyType.Float:
+                        case ShaderPropertyType.Range:
+                            valueStr = mat.GetFloat(name).ToString();
+                            mpbValueStr = mpb.GetFloat(name).ToString();
+                            break;
+                        case ShaderPropertyType.Texture:
+                            Texture tex = mat.GetTexture(name);
+                            Texture mpbtex = mpb.GetTexture(name);
+                            valueStr = tex ? tex.name : "None";
+                            mpbValueStr = mpbtex ? mpbtex.name : "None";
+                            break;
+                    }
+
+                    Log(CC.Gray, $"Property {i}: {name} ({type}) = {valueStr}");
+                    Log(CC.White, $"    Property {i}: {name} ({type}) = {mpbValueStr}");
                 }
-                if (mpb.HasFloat(n))
+
+                for (int n = -5; n < 400; n++)
                 {
-                    Log(CC.Green, $"Found Float property #{n}: {mpb.GetFloat(n)}");
-                }
-                if (mpb.HasVector(n))
-                {
-                    Log(CC.Green, $"Found Vector property #{n}: {mpb.GetVector(n)}");
-                }
-                if (mpb.HasBuffer(n))
-                {
-                    Log(CC.Green, $"Found Buffer property #{n}");
+                    if (mpb.HasColor(n))
+                    {
+                        Log(CC.Green, $"Found Color property #{n}: {mpb.GetColor(n)}");
+                    }
+                    if (mpb.HasFloat(n))
+                    {
+                        Log(CC.Green, $"Found Float property #{n}: {mpb.GetFloat(n)}");
+                    }
+                    if (mpb.HasVector(n))
+                    {
+                        Log(CC.Green, $"Found Vector property #{n}: {mpb.GetVector(n)}");
+                    }
+                    if (mpb.HasBuffer(n))
+                    {
+                        Log(CC.Green, $"Found Buffer property #{n}");
+                    }
                 }
             }
-        }
-    }*/
+        }*/
     }
 }

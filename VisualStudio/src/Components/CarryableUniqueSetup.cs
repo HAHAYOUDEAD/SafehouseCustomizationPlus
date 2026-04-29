@@ -1,5 +1,6 @@
 ﻿global using static SCPlus.CarryableUniqueSetup;
 using Il2CppTLD.ModularElectrolizer;
+using UnityEngine;
 
 namespace SCPlus
 {
@@ -197,6 +198,79 @@ namespace SCPlus
             cookieLight.innerSpotAngle = 80f;
 
             yield break;
+        }
+
+        public static GameObject ReconstructTunnelLantern()
+        {
+            string name = "INTERACTIVE_TunnelLantern_Prefab";
+            GameObject go = UnityEngine.Object.Instantiate(CarryableData.sneakyBundle.LoadAsset<GameObject>(name));
+            go.name = name;
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                if (r.name.ToLower().Contains("glass")) r.sharedMaterial.shader = transparentShader;
+                else r.sharedMaterial.shader = standardShader;
+                r.castShadows = false;
+            }
+
+            GameObject interaction = new ("InteractLightsource");
+            interaction.transform.parent = go.transform;
+
+            GameObject lightRoot = new GameObject("LightRoot");
+            lightRoot.transform.parent = go.transform;
+            lightRoot.transform.localPosition = new Vector3(0f, 0.14f, 0.12f);
+            lightRoot.active = false;
+            GameObject light = new GameObject("Light");
+            light.transform.parent = lightRoot.transform;
+            light.transform.localPosition = Vector3.zero;
+
+            var l = light.AddComponent<Light>();
+            light.AddComponent<LightTracking>();
+            l.cookie = AssetHelper.SafeLoadAssetAsync<Cubemap>("Assets/ArtAssets/Textures/FX/FX_LightCookieLantern.psd").WaitForCompletion();
+            l.intensity = 2.2f; // vanilla 4, lower for balance™
+            l.range = 6f; // vanilla 10, lower for balance™
+            l.color = new Color(1f, 0.4906f, 0f);
+            l.shadowBias = 0.01f;
+            l.shadows = LightShadows.Hard;
+
+            GameObject particleDonor = UnityEngine.Object.Instantiate(GearItem.LoadGearItemPrefab("GEAR_KeroseneLampB").gameObject);
+            GameObject p = particleDonor.transform.Find("FX/LampFlame").gameObject;
+            p.transform.parent.gameObject.active = true;
+            p.transform.parent = lightRoot.transform;
+            p.transform.localPosition = Vector3.up * 0.05f;
+
+            UnityEngine.Object.Destroy(p.GetComponent<ParticleRandomEmission>());
+            var ps = p.GetComponent<ParticleSystem>();
+            ps.emissionRate = 50f;
+            ps.maxParticles = 20;
+            ps.startSize = 0.05f;
+            ps.startSpeed = 0.1f;
+            ps.startLifetime = 0.6f;
+
+            UnityEngine.Object.Destroy(particleDonor);
+
+            var il = interaction.AddComponent<InteractiveLightsource>();
+            il.m_ExtinguishLightProgress = new LocalizedString() { m_LocalizationID = "GAMEPLAY_Extinguishing" };
+            il.m_StartingLightProgress = new LocalizedString() { m_LocalizationID = "GAMEPLAY_LanternLighting" };
+            il.m_LightPromptText = new LocalizedString() { m_LocalizationID = "GAMEPLAY_Light" };
+            il.m_ExtinguishPromptText = new LocalizedString() { m_LocalizationID = "GAMEPLAY_Extinguish" };
+            il.m_ExtinguishFireGameTimeMinutes = 1f;
+            il.m_ExtinguishFireRealTimeSeconds = 2f;
+            il.m_StartFireGameTimeMinutes = 1f;
+            il.m_StartFireRealTimeSeconds = 2f;
+            il.m_Light = lightRoot;
+            il.m_LightType = LightSourceType.TunnelLantern;
+            il.m_LightsourceLinks = new();
+            il.m_MissionIllumination = null;
+
+            var si = interaction.AddComponent<SimpleInteraction>();
+            si.AddEventCallback(InteractionEventType.PerformInteraction, (UnityAction<BaseInteraction>)(_ => il.PerformInteraction()));
+            si.m_DefaultHoverText.m_LocalizationID = "GAMEPLAY_WhiteoutListLantern";
+            si.InitializeInteraction();
+
+            var ft = interaction.AddComponent<SCPlusSimpleFuelTank>();
+            ft.Init(SCPlusSimpleFuelTank.fuelTankUser.tunnelLantern, 1);
+
+            return go;
         }
 
         public static GameObject ReconstructTraderRadio()

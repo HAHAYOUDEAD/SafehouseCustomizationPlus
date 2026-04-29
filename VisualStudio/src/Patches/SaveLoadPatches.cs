@@ -6,10 +6,8 @@ using static SCPlus.CarryableData;
 
 namespace SCPlus
 {
-
     internal class SaveLoadPatches
     {
-
         [HarmonyPatch(typeof(GameManager), nameof(GameManager.ResetLists))]
         private static class ClearCarryablesOnSceneChange
         {
@@ -103,12 +101,9 @@ namespace SCPlus
                             go.active = false;
                             Log(CC.Gray, $"Disabling {proxy.name} in scene | native: {proxy.nativeScene} current: {proxy.currentScene}");
 
-
                             if ((proxy.state & CS.Removed) != 0)
                             {
-
                                 dataList.RemoveAt(i);
-
 
                                 continue;
                             }
@@ -168,24 +163,39 @@ namespace SCPlus
                     if (instance != null)
                     {
                         instance.name = data.name;
-                        DecorationItem di = SCPMain.MakeIntoDecoration(instance);
+                        DecorationItem di = SCPMain.MakeIntoDecoration(instance, otm.placeRules);
                         SCPlusCarryable carryable = instance.AddComponent<SCPlusCarryable>();
                         carryable.isInstance = true;
                         bool shouldLoadAdditionalData = false;
 
                         if ((data.state & CS.OnPlayer) != 0) // in inventory
                         {
-                            //dupes when changing scene
-                            Log(CC.Yellow, $"Instantiating {data.name} in inventory | native: {data.nativeScene} current: {data.currentScene}");
-                            GameManager.GetInventoryComponent().AddDecoration(di);
+                            //dupes when changing scene?
+                            if ((data.state & CS.InTravois) != 0) // in carried travois
+                            {
+                                Log(CC.DarkYellow, $"Instantiating {data.name} in carried travois | native: {data.nativeScene} current: {data.currentScene}");
+                                MiscPatches.InitDecoInContainers.earlyCarriedTravoisList.Add(di);
+                            }
+                            else
+                            {
+                                Log(CC.Yellow, $"Instantiating {data.name} in inventory | native: {data.nativeScene} current: {data.currentScene}");
+                                GameManager.GetInventoryComponent().AddDecoration(di);
+                                
+                            }
                             instance.SetActive(false);
-                        }
+                        }                        
                         else if (data.TryGetContainer(out var c)) // in container
                         {
-                            string name = GetRealParent(c.transform).name;
-                            if (name == c.name) name = c.transform.root.name; // mainly for travois
-                            Log(CC.Green, $"Instantiating {data.name} in container {name} | native: {data.nativeScene} current: {data.currentScene}");
-                            c.AddDecorationItem(di);
+                            if ((data.state & CS.InTravois) != 0) // in dropped travois
+                            {
+                                Log(CC.DarkGreen, $"Instantiating {data.name} in dropped travois | native: {data.nativeScene} current: {data.currentScene}");
+                                MiscPatches.InitDecoInContainers.earlyTravoisList.Add(di);
+                            }
+                            else
+                            {
+                                Log(CC.Green, $"Instantiating {data.name} in container {GetRealParent(c.transform).name} | native: {data.nativeScene} current: {data.currentScene}");
+                                c.AddDecorationItem(di);
+                            }
                             instance.SetActive(false);
                         }
                         else // in scene

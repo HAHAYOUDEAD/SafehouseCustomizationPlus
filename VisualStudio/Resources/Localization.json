@@ -61,7 +61,7 @@
 
     "English": "This object cannot be duplicated",
     "Russian": "Этот объект нельзя дублировать"
-  },  
+  },
   "SCP_Action_CantPickupPeriod": {
 
     "English": "This object cannot be picked up",
@@ -78,6 +78,32 @@
   "SCP_Label_Carryable": {
 
     "English": "SC+ Carryable"
+  },
+
+
+
+
+  "SCP_FuelTank_RefuelFailed": {
+
+    "English": "Don't have enough fuel"
+  },
+
+  "SCP_FuelTank_RemainingBurnTime": {
+
+    "English": "Will burn for about {hours} hours"
+  },
+  "SCP_FuelTank_RemainingBurnTime_Uncertain": {
+
+    "English": "Will burn for a couple more hours"
+  },  
+  "SCP_FuelTank_RemainingBurnTime_Low": {
+
+    "English": "It's almost empty"
+  },
+  
+  "SCP_FuelTank_Empty": {
+
+    "English": "It's empty"
   },
 
 
@@ -102,5 +128,9 @@
   "SCP_Deco_Forge": {
 
     "English": "Forge"
+  },
+  "SCP_Deco_TunnelLantern": {
+
+    "English": "Tunnel Lantern"
   }
 }

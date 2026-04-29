@@ -39,6 +39,7 @@ namespace SCPlus
 
             modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
             LocalizationManager.LoadJsonLocalization(ResourceHandler.LoadEmbeddedJSON("Localization.json"));
+            CarryableData.sneakyBundle = ResourceHandler.LoadEmbeddedAssetBundle("nothingtoseehere");
 
             Settings.OnLoad();
 
@@ -124,7 +125,14 @@ namespace SCPlus
                 {
                     if (TryGetCarryableRoot(found.transform, out GameObject? root))
                     {
-                        SCPMain.MakeIntoDecoration(root);
+                        SCPMain.MakeIntoDecoration(root, boxPlacementRules);
+                    }
+                }
+                foreach (var found in FindObjectsOfTypeInScene<InteractiveLightsource>(currentScene)) // mine lanterns
+                {
+                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
+                    {
+                        SCPMain.MakeIntoDecoration(root, wallPlacementRules);
                     }
                 }
                 stopwatch.Stop();
@@ -377,8 +385,10 @@ namespace SCPlus
         }
   
 
-        public static DecorationItem? MakeIntoDecoration(GameObject go)
+        public static DecorationItem? MakeIntoDecoration(GameObject go, PlaceMeshRules rules = PlaceMeshRules.Default)
         {
+            if (rules == PlaceMeshRules.Default) rules = genericPlacementRules;
+
             if (go && !go.GetComponentInChildren<DecorationItem>())
             {
                 string name = SanitizeObjectName(go.name);
@@ -391,6 +401,7 @@ namespace SCPlus
                 di.GetDecorationPrefab();
                 di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
                 di.GetCraftingDisplayName();
+                /*
                 if (name.ToLower().Contains("container"))
                 {
                     di.m_PlacementRules = boxPlacementRules;
@@ -399,7 +410,7 @@ namespace SCPlus
                 {
                     di.m_PlacementRules = genericPlacementRules;
                 }
-                
+                */
                 //di.m_IconReference = new("");
 
                 RelevantSetupForDecorationItem(di);
