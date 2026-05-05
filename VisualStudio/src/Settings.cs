@@ -67,12 +67,16 @@ namespace SCPlus
         [Description("Interact with workbenches like before. RMB to break down\n\nDefault: true")]
         public bool altWorkbenchInteraction = true;
 
+        [Name("Hide hover labels")]
+        [Description("Hide labels when hovering over decorations, because you can already see what you're looking at\n\nDefault: false")]
+        public bool disableHoverLabels = false;
+
         [Name("Weight approximation")]
         [Description("Simple attempt to calculate decoration weight from its material and model volume. Can produce funny results\n\nDefault: true")]
         public bool doWeightCalculation = true;
 
         [Name("Weight multiplier")]
-        [Description("Adjust weight approximation to your liking (updated on newly acquired items or after game restart)\n\nDefault: 1")]
+        [Description("Adjust weight approximation to your liking (updated on newly acquired items or after game restart)\n\nThis does not affect vanilla decorations\n\nDefault: 1")]
         [Slider(0.1f, 2f, 20)]
         public float autoWeightMultiplier = 1f;
 
@@ -109,20 +113,6 @@ namespace SCPlus
         [Slider(0f, 20f, 21)]
         public float outlineThickness = 4f;
 
-        [Section("Dev")]
-        [Name("Enable developer inspect mode")]
-        [Description("Sprint + RMB on any item to inpect, arrows to adjust position, +/- to zoom, 0 to take screenshot with object name")]
-        public bool devInspect = false;
-
-        [Name("Debug")]
-        [Description("Send debug info to console")]
-        public bool debugLog = false;
-
-        [Name("Load interval")]
-        [Description("Skip frame after how many objects checked. Lower values will lag less but take longer, higher - lag more and take less time\n\nDO NOT quit or enter transition while it loads")]
-        [Slider(2, 100)]
-        public int carryableProcessingInterval = 10;
-
         [Section("Spooky")]
         [Name("Allow to move corpses")]
         [Description("But why?")]
@@ -138,9 +128,22 @@ namespace SCPlus
         public bool ignorePlaceWeight = false;
 
         [Name("Global weight modifier")]
-        [Description("Updated on newly acquired items or after game restart")]
+        [Description("Updated on newly acquired items or after game restart\n\nAffects all decorations")]
         [Slider(0f, 1f, 11)]
         public float globalWeightModifier = 1f;
+
+        [Name("Infinite fuel")]
+        [Description("For lantern decorations. Requires scene reload if there are lanterns in scene")]
+        public bool infiniteFuel = false;
+
+        [Section("Dev")]
+        [Name("Enable developer inspect mode")]
+        [Description("Sprint + RMB on any item to inpect, arrows to adjust position, +/- to zoom, </> to move inspection light, 0 to take screenshot with object name")]
+        public bool devInspect = false;
+
+        [Name("Debug")]
+        [Description("Send debug info to console")]
+        public bool debugLog = false;
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
         {

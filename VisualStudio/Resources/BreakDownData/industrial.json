@@ -1,0 +1,276 @@
+[{
+	"filter": "PaintCanABase",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "PaintCanBBase",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "PaintCanALid",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 10.0,
+	"tools": [
+		"hacksaw"
+	]
+},{
+	"filter": "PaintCanBLid",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 10.0,
+	"tools": [
+		"hacksaw"
+	]
+},{
+	"filter": "Paintbrush",
+	"sound": "ReclaimewWoodNoAxe",
+	"minutesToHarvest": 15.0,
+	"yield": [{
+		"item":"tinder",
+		"num":1
+	}]
+},{
+	"filter": "MetalPipePile",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "Tire",
+	"sound": "Leather",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"knife"
+	]
+},{
+	"filter": "TractorWheel",
+	"sound": "Leather",
+	"minutesToHarvest": 75.0,
+	"requireTool":true,
+	"tools": [
+		"knife"
+	]
+},{
+	"filter": "PlasticBarrel",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"knife"
+	]
+},{
+	"filter": "MetalBarrel",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "IndustrialLamp",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 40.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "MetalTroughA",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 80.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "GearWheel",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "Propeller_",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "Horseshoe",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 15.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "DamagedDoubleDoors",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":4
+	}]
+},{
+	"filter": "MetalCorrugated",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":4
+	}]
+},{
+	"filter": "DamagedSingleDoor",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 50.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "DamagedBathroomDoor",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 50.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "Brick_",
+	"sound": "Generic",
+	"minutesToHarvest": 15.0,
+	"requireTool":true,
+	"tools": [
+		"hammer"
+	],
+	"yield": [{
+		"item":"stone",
+		"num":1
+	}]
+},{
+	"filter": "BrickPile",
+	"sound": "Generic",
+	"minutesToHarvest": 150.0,
+	"requireTool":true,
+	"tools": [
+		"hammer"
+	],
+	"yield": [{
+		"item":"stone",
+		"num":10
+	}]
+},{
+	"filter": "IndustrialDebrisA",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 180.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":8
+	}]
+},{
+	"filter": "IndustrialDebrisD",
+	"sound": "ReclaimedWood",
+	"minutesToHarvest": 120.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":16
+	}]
+},{
+	"filter": "IndustrialDebrisE",
+	"sound": "ReclaimedWood",
+	"minutesToHarvest": 120.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":16
+	}]
+},{
+	"filter": "ControlPanelTowerADamaged",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 20.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+}]

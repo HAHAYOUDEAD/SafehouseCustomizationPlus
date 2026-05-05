@@ -1,7 +1,6 @@
 ﻿using UnityEngine.ResourceManagement.ResourceLocations;
 using System.Diagnostics;
 using Il2CppTLD.BigCarry;
-using Il2CppNodeCanvas.Tasks.Actions;
 using static SCPlus.CarryableData;
 
 namespace SCPlus
@@ -20,7 +19,7 @@ namespace SCPlus
         [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.SaveSceneData))]
         private static class SaveOmittedData
         {
-            internal static void Postfix(ref string sceneSaveName)
+            internal static void Postfix(string sceneSaveName)
             {
                 //string serializedMovablesForScene = CarryableManager.SerializeAll(false);
                 //MelonLogger.Msg(CC.Red, serializedMovablesForScene);
@@ -33,8 +32,16 @@ namespace SCPlus
         [HarmonyPatch(typeof(SaveGameSystem), nameof(SaveGameSystem.LoadSceneData))]
         private static class MakeStuffMovable
         {
-            internal static void Postfix(ref string sceneSaveName)
+            internal static void Postfix(string sceneSaveName)
             {
+
+                if (GameManager.CompareSceneNames(TrackNonUniqueGuids.sceneNeedsGuidRefresh, GameManager.m_ActiveScene))
+                {
+                    TrackNonUniqueGuids.sceneNeedsGuidRefresh = "";
+
+                    InvokeCapgrasDelusion(sceneSaveName);
+                }
+
                 Stopwatch stopwatch = Stopwatch.StartNew();
 
                 string? serializedSaveData = dataManager.Load(movablesSaveDataTag + "_" + sceneSaveName);
@@ -120,7 +127,7 @@ namespace SCPlus
 
                 stopwatch.Restart();
 
-                SCPMain.instantiatingCarryables = true;
+                instantiatingCarryables = true;
                 GameObject globalParent = new GameObject("CarryableTemp");
                 globalParent.SetActive(false);
 
@@ -163,7 +170,7 @@ namespace SCPlus
                     if (instance != null)
                     {
                         instance.name = data.name;
-                        DecorationItem di = SCPMain.MakeIntoDecoration(instance, otm.placeRules);
+                        DecorationItem di = MakeIntoDecoration(instance, otm.placeRules);
                         SCPlusCarryable carryable = instance.AddComponent<SCPlusCarryable>();
                         carryable.isInstance = true;
                         bool shouldLoadAdditionalData = false;
@@ -174,7 +181,7 @@ namespace SCPlus
                             if ((data.state & CS.InTravois) != 0) // in carried travois
                             {
                                 Log(CC.DarkYellow, $"Instantiating {data.name} in carried travois | native: {data.nativeScene} current: {data.currentScene}");
-                                MiscPatches.InitDecoInContainers.earlyCarriedTravoisList.Add(di);
+                                ContainerPatches.InitDecoInContainers.earlyCarriedTravoisList.Add(di);
                             }
                             else
                             {
@@ -189,7 +196,7 @@ namespace SCPlus
                             if ((data.state & CS.InTravois) != 0) // in dropped travois
                             {
                                 Log(CC.DarkGreen, $"Instantiating {data.name} in dropped travois | native: {data.nativeScene} current: {data.currentScene}");
-                                MiscPatches.InitDecoInContainers.earlyTravoisList.Add(di);
+                                ContainerPatches.InitDecoInContainers.earlyTravoisList.Add(di);
                             }
                             else
                             {
@@ -217,10 +224,76 @@ namespace SCPlus
                     }
                 }
                 GameObject.Destroy(globalParent);
-                SCPMain.instantiatingCarryables = false;
+                instantiatingCarryables = false;
 
                 stopwatch.Stop();
                 Log(CC.Blue, $"SC+ Init pass: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
+            }
+        }
+
+        public static void InvokeCapgrasDelusion(string uniqueSceneName)
+        {
+            int num = 0;
+
+            HashSet<GameObject> forDeletion = [];
+
+            foreach (var og in FindInPlayableScenes<ObjectGuid>(true).Where(c => c?.GetComponent<DecorationItem>() != null))
+            {
+                if (og && !string.IsNullOrEmpty(og.GetPDID()))
+                {
+                    GameObject dis = og.gameObject;
+                    GameObject dat = UnityEngine.Object.Instantiate(dis, dis.transform.parent);
+                    dis.SetActive(false);
+                    dat.name = dis.name;
+
+                    List<string> guidTransfer = [];
+
+                    foreach (var oldOg in dis.GetComponentsInChildren<ObjectGuid>())
+                    {
+                        guidTransfer.Add(oldOg.GetPDID());
+                    }
+
+                    int i = 0;
+                    foreach (var newOg in dat.GetComponentsInChildren<ObjectGuid>())
+                    {
+                        var newGuid = GenerateGuid(guidTransfer[i] + uniqueSceneName);
+                        newOg.m_RuntimeCachedPdid = newGuid.ToString();
+                        newOg.MaybeRuntimeRegister();
+
+                        i++;
+                    }
+
+                    //dat.SetActive(true);
+
+                    PdidTable.RuntimeUnregister(og, true);
+                    forDeletion.Add(dis);
+
+                    num++;
+                }
+
+            }
+            Log(CC.Green, $"Entering scene {uniqueSceneName} for the first time, refreshing {num} decoration GUIDs");
+
+            foreach (var bye in forDeletion)
+            {
+                UnityEngine.Object.Destroy(bye);
+            }
+        }
+
+
+        [HarmonyPatch(typeof(LoadScene), nameof(LoadScene.MarkExplored))]
+        private static class TrackNonUniqueGuids
+        {
+            public static string sceneNeedsGuidRefresh = "";
+            internal static void Prefix(LoadScene __instance)
+            {
+                if (!__instance.m_Explored && __instance.m_SceneCanBeInstanced)
+                {
+                    sceneNeedsGuidRefresh = __instance.m_SceneToLoad;
+                    //MelonLogger.Msg(CC.Red, $"Instantiable unexplored scene {__instance.m_SceneToLoad}");
+                }
+                    
+                else sceneNeedsGuidRefresh = "";
             }
         }
     }

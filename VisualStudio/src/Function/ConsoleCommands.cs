@@ -83,7 +83,7 @@
             }
             //go = GameObject.Instantiate(go);
 
-            SCPMain.decorationJustDuped = true;
+            decorationJustDuped = true;
             GameManager.GetPlayerManagerComponent().StartPlaceMesh(go, PlaceMeshFlags.DestroyOnCancel, genericPlacementRules);
             
             uConsole.TurnOff();

@@ -229,6 +229,9 @@ namespace SCPlus
             {"CONTAINER_LockerA", new() { weight = 10f } },
             {"CONTAINER_FirstAidKit", new() { weight = 1.0f } },
             {"INTERACTIVE_TunnelLantern_Prefab", new() { nameLocID = "SCP_Deco_TunnelLantern", weight = 1.0f } },
+            {"CONTAINER_SmallCabinetA", new() { weight = 6f } },
+            {"CONTAINER_LargeCabinetA", new() { weight = 12f } },
+            {"CONTAINER_Fridge", new() { weight = 25f } },
         };
 
         public static Dictionary<string, HashSet<BlacklistObject>> blacklistSpecific = new(StringComparer.OrdinalIgnoreCase)

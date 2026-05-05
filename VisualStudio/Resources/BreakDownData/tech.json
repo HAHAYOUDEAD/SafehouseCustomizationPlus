@@ -1,0 +1,119 @@
+[{
+	"filter": "ComputerLaptop",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "ComputerMonitor",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "ComputerTower",
+	"sound": "Generic",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "Television",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "OldTelevision",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "ComputerKeyboard",
+	"sound": "Generic",
+	"minutesToHarvest": 15.0,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	]
+},{
+	"filter": "ComputerMouse",
+	"sound": "Generic",
+	"minutesToHarvest": 10.0,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	]
+},{
+	"filter": "ComputerFloppy",
+	"sound": "Generic",
+	"minutesToHarvest": 5.0,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	]
+},{
+	"filter": "ClockRadio",
+	"sound": "Generic",
+	"minutesToHarvest": 20.0,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	]
+},{
+	"filter": "StereoCassetteTape",
+	"sound": "Generic",
+	"minutesToHarvest": 5.0,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	]
+},{
+	"filter": "StereoSpeaker",
+	"sound": "Generic",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+}]

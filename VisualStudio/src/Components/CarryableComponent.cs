@@ -200,11 +200,15 @@ namespace SCPlus
                 case CT.FuelLantern:
                     var ft = this.GetComponentInChildren<SCPlusSimpleFuelTank>();
                     var il = this.GetComponentInChildren<InteractiveLightsource>();
-                    if (ft && il)
+                    if (il)
                     {
-                        data = (il && il.m_IsOn ? "1" : "0") + ft.GetRemainingFuelUnits();
+                        data = (il && il.m_IsOn ? "1" : "0");
                     }
-                    break;
+                    if (ft)
+                    {
+                        data += ft.GetRemainingFuelUnits().ToString();
+                    }
+                        break;
                 default:
                     break;
             }
@@ -293,7 +297,7 @@ namespace SCPlus
                 case CT.FuelLantern:
                     var ft = this.GetComponentInChildren<SCPlusSimpleFuelTank>();
                     var il = this.GetComponentInChildren<InteractiveLightsource>();
-                    if (ft)
+                    if (ft && data.Length > 1)
                     {
                         ft.SetRemainingFuelUnits(long.Parse(data.Substring(1)));
                     }

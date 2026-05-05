@@ -7,7 +7,7 @@
         [HarmonyPatch(typeof(Panel_HUD), nameof(Panel_HUD.SetHoverText))] // workbench hover prompts
         public class ShowButtonPrompts
         {
-            public static void Prefix(ref GameObject itemUnderCrosshairs)
+            public static void Prefix(GameObject itemUnderCrosshairs)
             {
                 if (!Settings.options.altWorkbenchInteraction) return;
                 if (!GameManager.GetSafehouseManager() || GameManager.GetSafehouseManager().IsCustomizing()) return;

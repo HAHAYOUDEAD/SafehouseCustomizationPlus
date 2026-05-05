@@ -1,0 +1,88 @@
+[{
+	"filter": "SignStop",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "SignTruck",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "Rake",
+	"sound": "ReclaimedWoodNoAxe",
+	"minutesToHarvest": 25.0,
+	"requireTool":false,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	},{
+		"item":"tinder",
+		"num":3
+	}]
+},{
+	"filter": "CrossWood",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":2
+	}]
+},{
+	"filter": "Gravestone",
+	"sound": "Generic",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hammer"
+	],
+	"yield": [{
+		"item":"stone",
+		"num":5
+	}]
+},{
+	"filter": "BoatRow",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 240.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":20
+	}]
+},{
+	"filter": "FishingNet",
+	"sound": "cloth",
+	"minutesToHarvest": 150.0,
+	"requireTool":true,
+	"tools": [
+		"knife"
+	],
+	"yield": [{
+		"item":"line",
+		"num":10
+	}]
+}]

@@ -43,12 +43,25 @@
         </Reference>
     </ItemDefinitionGroup>
     <ItemGroup>
+      <None Remove="Resources\BreakDownData\decoration.json" />
+      <None Remove="Resources\BreakDownData\exterior.json" />
+      <None Remove="Resources\BreakDownData\industrial.json" />
+      <None Remove="Resources\BreakDownData\interiors.json" />
+      <None Remove="Resources\BreakDownData\kitchen.json" />
+      <None Remove="Resources\BreakDownData\tech.json" />
       <None Remove="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
       <None Remove="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <None Remove="Resources\Localization.json" />
       <None Remove="Resources\nothingtoseehere" />
     </ItemGroup>
     <ItemGroup>
+      <EmbeddedResource Include="Resources\BreakDownData\misc.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\decoration.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\exterior.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\industrial.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\interiors.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\kitchen.json" />
+      <EmbeddedResource Include="Resources\BreakDownData\tech.json" />
       <EmbeddedResource Include="Resources\DumbShield\Icons\catalog_SCPlusIcons.json" />
       <EmbeddedResource Include="Resources\DumbShield\Icons\scplusicons_assets_all.bundle" />
       <EmbeddedResource Include="Resources\Localization.json" />
@@ -60,6 +73,9 @@
     <ItemGroup>
       <Reference Include="DynamicTemperature">
         <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\DynamicTemperature.dll</HintPath>
+      </Reference>
+      <Reference Include="Il2CppInterop.Runtime">
+        <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
       </Reference>
       <Reference Include="ModComponent">
         <HintPath>S:\SteamLibrary\steamapps\common\TheLongDark\Mods\ModComponent.dll</HintPath>

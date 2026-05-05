@@ -13,6 +13,8 @@ namespace SCPlus
             public static List<int> inProximity = new();
             internal static bool Prefix(Il2CppSystem.Collections.Generic.List<Renderer> renderers, ref MaterialPropertyBlock propertyBlock)
             {
+                //if (GameManager.GetPlayerManagerComponent().IsInPlacementMode()) return true;
+
                 if (Settings.options.outlineVisibility == 1 && propertyBlock != null) // only when proximity based outlines, ignore outline removal
                 {
                     int instanceID = renderers[0].GetInstanceID();
@@ -31,60 +33,23 @@ namespace SCPlus
                 }
                 return true;
             }
-        }        
+        }
 
-        [HarmonyPatch(typeof(Container), nameof(Container.Deserialize))]
-        public static class InitDecoInContainers
+        [HarmonyPatch(typeof(InputManager), nameof(InputManager.ExecuteAltFire))] 
+        internal class ProcessStructureRightClick
         {
-            public static HashSet<DecorationItem> earlyTravoisList = [];
-            public static HashSet<DecorationItem> earlyCarriedTravoisList = [];
-            internal static void Prefix(Container __instance)
+            private static void Postfix()
             {
-                if (!IsInTravois(__instance.transform))
-                {
-                    earlyTravoisList.Clear();
-                    earlyCarriedTravoisList.Clear();
-                }
-            }
-            internal static void Postfix(Container __instance)
-            {
-                foreach (var deco in __instance.m_DecorationItems)
-                {
-                    if (deco)
-                    {
-                        BreakDown bd = __instance.GetComponentInChildren<BreakDown>();
+                if (!SCPMain.isLoaded) return;
 
-                        if (!deco.m_AllowInInventory)
-                        {
-                            deco.m_AllowInInventory = true;
-
-                            SCPMain.RelevantSetupForDecorationItem(deco, true);
-
-                            if (bd)
-                            {
-                                bd.m_AllowEditModePlacement = true;
-                            }
-                        }
-                    }
-                }
-
-                // readd carryables for late travois initialization
-                if (earlyTravoisList.Count > 0) 
+                SCPlusSimpleFuelTank? ft = GetInteractiveGameObjectUnderCrosshair()?.GetComponentInChildren<SCPlusSimpleFuelTank>();
+                if (ft)
                 {
-                    foreach(var d in earlyTravoisList)
-                    {
-                        __instance.AddDecorationItem(d);
-                    }
-                }                
-                if (earlyCarriedTravoisList.Count > 0)
-                {
-                    foreach(var d in earlyCarriedTravoisList)
-                    {
-                        __instance.AddDecorationItem(d);
-                    }
+                    ft.Refuel();
                 }
             }
         }
+
    
         [HarmonyPatch(typeof(InteractiveLightsource), nameof(InteractiveLightsource.Awake))]
         private static class TunnelLanternFix
@@ -102,7 +67,14 @@ namespace SCPlus
             {
                 if (__instance.TryGetComponent<SCPlusSimpleFuelTank>(out var ft))
                 {
-                    InterfaceManager.GetPanel<Panel_Subtitles>().ShowSubtitles(ft.GetRemainingFuelTimeProcessedString(), 8f);
+                    //GameManager.GetPlayerVoiceComponent().Play("Play_FireFail", Il2CppVoice.Priority.Critical); // that didn't work
+                    // Play_FailGeneralSwitch // damn it/ come on
+                    // Play_VOCatchBreath // phew/exhale
+                    // Play_VOInspectObject // could find use/useful
+                    // Play_VOInspectObjectImportant // lucky day/perfect
+
+
+                    DialogueSay(ft.GetRemainingFuelTimeProcessedString(), 8f);
                 }
             }
         }
@@ -191,55 +163,50 @@ namespace SCPlus
             }
         }
 
-        [HarmonyPatch(typeof(Panel_Container), nameof(Panel_Container.OnInventoryToContainer))]
-        private static class PreventStoringCarryablesInCarryables
+        [HarmonyPatch(typeof(Panel_HUD), nameof(Panel_HUD.SetHoverText))]
+        public class HideHoverLabels
         {
-            internal static bool Prefix(ref Panel_Container __instance)
+            public static void Postfix(Panel_HUD __instance, GameObject itemUnderCrosshairs, ref string hoverText)
             {
-                var item = __instance.GetCurrentlySelectedItem();
-                
-                if (!item.m_DecorationItem)
+                if (!Settings.options.disableHoverLabels) return;
+                if (!GameManager.GetSafehouseManager() || !GameManager.GetSafehouseManager().IsCustomizing()) return;
+                if (itemUnderCrosshairs?.GetComponentInChildren<DecorationItem>())
                 {
-                    return true;
+                    __instance.m_Label_ObjectName.text = "";
+                    __instance.m_HoverTextBG.enabled = false;
+                    __instance.m_HoverTextLinebreak.enabled = false;
                 }
-
-                DecorationItem di = item.m_DecorationItem;
-
-                SCPlusCarryable scItem = di.GetComponent<SCPlusCarryable>();
-                SCPlusCarryable scContainer = __instance.m_Container.GetComponentInParent<SCPlusCarryable>();
-
-                if (scItem && scContainer)
-                {
-                    GameAudioManager.PlayGUIError();
-                    HUDMessage.AddMessage(Localization.Get("SCP_Action_CantStoreCarryableInCarryable"), false, true);
-                    return false;
-                }
-
-                return true;
             }
         }
+
+        /*
+        [HarmonyPatch(typeof(PdidTable), nameof(PdidTable.RuntimeAddOrReplace))]
+        private static class PreventDuplicateGuids
+        {
+            internal static void Prefix(PdidTable __instance, PdidObjectBase pdidObject, string guid)
+            {
+                if (pdidObject == null || PdidTable.GetGameObject(guid) == null) return;
+
+                if (pdidObject.gameObject.scene != PdidTable.GetGameObject(guid).scene)
+                {
+                    MelonLogger.Msg(CC.Red, $"1 DUPLICATE GUID {guid} | {PdidTable.GetGameObject(guid).name}");
+                }
+            }
+        }        
         
-        [HarmonyPatch(typeof(Panel_Container), nameof(Panel_Container.OnContainerToInventory))]
-        private static class PreventTakingUnfinishedDecorations
+        [HarmonyPatch(typeof(PdidTable), nameof(PdidTable.RuntimeRegister))]
+        private static class PreventDuplicateGuids2
         {
-            internal static bool Prefix(ref Panel_Container __instance)
+            internal static void Prefix(PdidTable __instance, PdidObjectBase pdidObject, string guid)
             {
-                var item = __instance.GetCurrentlySelectedItem();
-                
-                if (!item.m_DecorationItem)
-                {
-                    return true;
-                }
+                if (pdidObject == null || PdidTable.GetGameObject(guid) == null) return;
 
-                if (item.m_DecorationItem.GetComponent<InProgressCraftItem>())
+                if (pdidObject.gameObject.scene != PdidTable.GetGameObject(guid).scene)
                 {
-                    GameAudioManager.PlayGUIError();
-                    HUDMessage.AddMessage(Localization.Get("Gameplay_DecorationNotAllowedInInventory"), false, true);
-                    return false;
+                    MelonLogger.Msg(CC.Red, $"2 DUPLICATE GUID {guid} | {PdidTable.GetGameObject(guid).name}");
                 }
-
-                return true;
             }
         }
+        */
     }
 }

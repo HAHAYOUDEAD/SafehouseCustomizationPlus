@@ -36,10 +36,11 @@ namespace SCPlus
 
         private void OnTriggerEnter(Collider other)
         {
-            if (((1 << other.gameObject.layer) & (int)Utility.LayerMask.PossibleDecoration) == 0) return;
+            if (((1 << other.gameObject.layer) & (int)DecoLayerMask.PossibleDecoration) == 0) return;
 
             if (other.gameObject.TryGetComponentInParent(out DecorationItem di))
             {
+                if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem == di) return;
                 var rr = di.GetRenderers();
                 if (rr.Count > 0)
                 {
@@ -53,10 +54,11 @@ namespace SCPlus
 
         private void OnTriggerExit(Collider other)
         {
-            if (((1 << other.gameObject.layer) & (int)Utility.LayerMask.PossibleDecoration) == 0) return;
+            if (((1 << other.gameObject.layer) & (int)DecoLayerMask.PossibleDecoration) == 0) return;
             
             if (other.gameObject.TryGetComponentInParent(out DecorationItem di))
             {
+                if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem == di) return;
                 var rr = di.GetRenderers();
                 if (rr.Count > 0)
                 {

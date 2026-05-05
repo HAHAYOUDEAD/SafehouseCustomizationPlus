@@ -1,0 +1,399 @@
+[{
+	"filter": "StickyNote",
+	"sound": "Paper",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "PaperDebris",
+	"sound": "Paper",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "PaperDeco",
+	"sound": "Paper",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "WallDecoPatterned",
+	"sound": "Paper",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "CalendarDeco",
+	"sound": "Paper",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "Cobweb",
+	"sound": "Wool",
+	"minutesToHarvest": 1.0
+},{
+	"filter": "ClipBoard",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 15.0,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"tinder",
+		"num":2
+	},{
+		"item":"CrumpledPaper",
+		"num":1
+	}]
+},{
+	"filter": "BulletinBoard",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":2
+	},{
+		"item":"cloth",
+		"num":2
+	}]
+},{
+	"filter": "DoorWood",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":6
+	}]
+},{
+	"filter": "FarmhouseDoor",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":6
+	}]
+},{
+	"filter": "WindowBlinds",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 50.0,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":2
+	}]
+},{
+	"filter": "CoatRack",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 30.0,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":1
+	}]
+},{
+	"filter": "WallHook",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 15.0,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"tinder",
+		"num":2
+	}]
+},{
+	"filter": "WallClock",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 30.0,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "ChairA_Cin",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 180.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":4
+	},{
+		"item":"Cloth",
+		"num":6
+	},{
+		"item":"Tinder",
+		"num":2
+	}]
+},{
+	"filter": "LampA",
+	"sound": "Generic",
+	"minutesToHarvest": 20.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	},{
+		"item":"Cloth",
+		"num":1
+	}]
+},{
+	"filter": "LampC",
+	"sound": "Generic",
+	"minutesToHarvest": 40.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw",
+		"hammer"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	},{
+		"item":"Cloth",
+		"num":1
+	}]
+},{
+	"filter": "ToyTractor",
+	"sound": "Generic",
+	"minutesToHarvest": 15.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":1
+	}]
+},{
+	"filter": "MetalFileCabinetDrawerA",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":3
+	}]
+},{
+	"filter": "WaterHeater",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 120.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":6
+	}]
+},{
+	"filter": "FridgeBottomDoor",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":4
+	}]
+},{
+	"filter": "FridgeTopDoor",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "WhalingShipBedMattress",
+	"sound": "Cloth",
+	"minutesToHarvest": 60.0,
+	"requireTool":true,
+	"tools": [
+		"knife"
+	],
+	"yield": [{
+		"item":"cloth",
+		"num":10
+	}]
+},{
+	"filter": "WhalingShipBedFrame",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 180.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":8
+	}]
+},{
+	"filter": "ElectricStovetop",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":4
+	}]
+},{
+	"filter": "ClothesHanger",
+	"sound": "Metal",
+	"minutesToHarvest": 10.0,
+	"tools": [
+		"hacksaw"
+	]
+},{
+	"filter": "ChurchPew",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 90.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":6
+	}]
+},{
+	"filter": "Organ",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 180.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":16
+	}]
+},{
+	"filter": "StepLadderA",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 120.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":10
+	}]
+},{
+	"filter": "Podium",
+	"sound": "WoodReclaimedNoAxe",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":3
+	}]
+},{
+	"filter": "CashRegisterDrawer",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 20.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "HandBasket",
+	"sound": "Generic",
+	"minutesToHarvest": 15.0,
+	"tools": [
+		"hatchet"
+	]
+},{
+	"filter": "CeilingPanel",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 20.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "FoodDisplayCase",
+	"sound": "MetalSaw",
+	"minutesToHarvest": 45.0,
+	"requireTool":true,
+	"tools": [
+		"hacksaw"
+	],
+	"yield": [{
+		"item":"ScrapMetal",
+		"num":2
+	}]
+},{
+	"filter": "InteriorFlag",
+	"sound": "Cloth",
+	"minutesToHarvest": 20.0,
+	"requireTool":true,
+	"tools": [
+		"knife"
+	],
+	"yield": [{
+		"item":"cloth",
+		"num":2
+	}]
+},{
+	"filter": "WetFloorSign",
+	"sound": "Generic",
+	"minutesToHarvest": 15.0,
+	"requireTool":false,
+	"tools": [
+		"knife",
+		"hatchet"
+	]
+},{
+	"filter": "DresserDrawer",
+	"sound": "WoodReclaimed",
+	"minutesToHarvest": 30.0,
+	"requireTool":true,
+	"tools": [
+		"hatchet"
+	],
+	"yield": [{
+		"item":"ReclaimedWoodB",
+		"num":1
+	}]
+}]

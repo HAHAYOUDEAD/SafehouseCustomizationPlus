@@ -67,6 +67,11 @@
     "English": "This object cannot be picked up",
     "Russian": "Этот объект нельзя взять"
   },
+  "SCP_Action_LiftRestrictions": {
+
+    "English": "Lift restrictions",
+    "Russian": "Снять ограничения"
+  },
 
 
 
@@ -85,7 +90,7 @@
 
   "SCP_FuelTank_RefuelFailed": {
 
-    "English": "Don't have enough fuel"
+    "English": "I don't have enough fuel"
   },
 
   "SCP_FuelTank_RemainingBurnTime": {
@@ -95,15 +100,19 @@
   "SCP_FuelTank_RemainingBurnTime_Uncertain": {
 
     "English": "Will burn for a couple more hours"
-  },  
+  },
   "SCP_FuelTank_RemainingBurnTime_Low": {
 
     "English": "It's almost empty"
   },
-  
+
   "SCP_FuelTank_Empty": {
 
     "English": "It's empty"
+  },
+  "SCP_FuelTank_Full": {
+
+    "English": "It's full already"
   },
 
 

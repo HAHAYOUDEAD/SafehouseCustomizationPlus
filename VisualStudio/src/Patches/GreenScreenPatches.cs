@@ -65,7 +65,7 @@
                     return;
                 }
                 SCPMain.DEVInspectMode = false;
-                SCPMain.SetupGreenscreen(GameManager.GetMainCamera(), true);
+                GreenScreen.SetupGreenScreen(GameManager.GetMainCamera(), true);
                 if (InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_StatDetails)
                     InterfaceManager.GetPanel<Panel_HUD>().m_InspectMode_StatDetails.gameObject.active = true;
                 if (InterfaceManager.GetPanel<Panel_HUD>().m_InspectModeItemTypeIcons[0]?.transform?.GetParent())
@@ -86,10 +86,9 @@
                 if (!SCPMain.DEVInspectMode) return;
                 if (GameManager.GetPlayerManagerComponent().IsInspectModeActive())
                 {
-                    SCPMain.SetupGreenscreen(GameManager.GetMainCamera());
+                    GreenScreen.SetupGreenScreen(GameManager.GetMainCamera());
                 }
             }
         }
-
     }
 }

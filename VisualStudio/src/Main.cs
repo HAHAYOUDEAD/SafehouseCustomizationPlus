@@ -1,12 +1,6 @@
-﻿using Il2CppSystem.Net;
-using UnityEngine.AddressableAssets.ResourceLocators;
+﻿using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using System.Diagnostics;
-using Il2CppSteamworks;
 using Il2CppTLD.OptionalContent;
-using UnityEngine.ResourceManagement.ResourceProviders;
-using Il2CppTLD.BigCarry;
-using static Il2Cpp.Utils;
 
 namespace SCPlus
 {
@@ -15,8 +9,6 @@ namespace SCPlus
         public static bool isLoaded = false;
         public static bool hasTFTFTF;
 
-        public static string modsPath;
-
         public static bool DEVInspectMode;
         public static float DEVInspectModeMoveStep = 0.01f;
         public static GameObject DEVInspectTempGO;
@@ -24,31 +16,26 @@ namespace SCPlus
         public static IResourceLocator catalogLocator;
         public static Dictionary<string, string> catalogParsed = new();
         public static HashSet<string> iconGuidLookupList = new();
-        
-        public static Dictionary<string, float> autoWeightTable = new(); // object name | weight
-
-        public static bool instantiatingCarryables;
-        public static bool decorationJustDuped;
 
         public static bool decorationListPopulated;
 
-        public static int carryableCoroutineCounter = 0;
+        public static Transform car;
 
         public override void OnInitializeMelon()
         {
-
-            modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
+            //modsPath = Path.GetFullPath(typeof(MelonMod).Assembly.Location + "/../../../Mods/");
             LocalizationManager.LoadJsonLocalization(ResourceHandler.LoadEmbeddedJSON("Localization.json"));
+            BreakDownHelper.PopulateDefinitions();
             CarryableData.sneakyBundle = ResourceHandler.LoadEmbeddedAssetBundle("nothingtoseehere");
 
             Settings.OnLoad();
 
-            ResourceHandler.ExtractFolderFromResources(modsPath + modFolder, resourcesFolder + resourcesFolderForAssumingPlayersUnableToRead, true);
+            ResourceHandler.ExtractFolderFromResources(Path.Combine(modsPath, modFolder), resourcesFolder + resourcesFolderForAssumingPlayersUnableToRead, true);
 
             AsyncOperationHandle<IResourceLocator> handle = null;
             try
             {
-                string path = modsPath + iconsFolder + iconsCatalog + ".json";
+                string path = Path.Combine(modsPath, iconsFolder, iconsCatalog + ".json");
                 handle = Addressables.LoadContentCatalogAsync(path);
                 catalogLocator = handle.WaitForCompletion();
                 if (catalogLocator != null && catalogLocator.Keys != null)
@@ -73,7 +60,7 @@ namespace SCPlus
             {
                 Log(CC.Red, $"Catalog {iconsCatalog} load failed: " + e.ToString());
             }
-            
+
             //handle?.Release(); 
         }
 
@@ -92,336 +79,12 @@ namespace SCPlus
         {
             if (!IsScenePlayable()) return;
 
-            Scene currentScene = SceneManager.GetSceneByName(sceneName);
-
-            if (sceneName.EndsWith("_SANDBOX"))
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root);
-                    }
-                }
-                foreach (var found in FindObjectsOfTypeInScene<MillingMachine>(currentScene))
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root);
-                    }
-                }
-
-                foreach (var found in FindObjectsOfTypeInScene<AmmoWorkBench>(currentScene))
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root);
-                    }
-                }
-
-                foreach (var found in FindObjectsOfTypeInScene<ObjectAnim>(currentScene)) // containers
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root, boxPlacementRules);
-                    }
-                }
-                foreach (var found in FindObjectsOfTypeInScene<InteractiveLightsource>(currentScene)) // mine lanterns
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root, wallPlacementRules);
-                    }
-                }
-                stopwatch.Stop();
-                Log(CC.Blue, $"SC+ Lookup pass 2: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
-            }
-            else if (sceneName.EndsWith("_DLC01"))
-            {
-                foreach (var found in FindObjectsOfTypeInScene<TraderRadio>(currentScene))
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root);
-                    }
-                }
-            }
-            else if (!sceneName.Contains("_"))
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                foreach (var found in FindObjectsOfTypeInScene<WoodStove>(currentScene))
-                {
-                    if (TryGetCarryableRoot(found.transform, out GameObject? root))
-                    {
-                        SCPMain.MakeIntoDecoration(root);
-                    }
-                }
-
-                stopwatch.Stop();
-                Log(CC.Blue, $"SC+ Lookup pass 1: {stopwatch.ElapsedMilliseconds} ms ({stopwatch.ElapsedTicks} ticks)");
-            }
+            LookupPotentialCarryables(sceneName);
         }
 
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
             DecorationPatches.injectPdids = true;
-        }
-
-        public static void SetupGreenscreen(Camera cam, bool reset = false)
-        {
-            if (reset)
-            {
-                GameManager.GetMainCamera().cullingMask = 490708959;
-                GameManager.GetMainCamera().clearFlags = CameraClearFlags.Skybox;
-            }
-            else
-            {
-                GameManager.GetMainCamera().cullingMask = 0;
-                GameManager.GetMainCamera().clearFlags = CameraClearFlags.SolidColor;
-                GameManager.GetMainCamera().backgroundColor = new Color(0.15f, 0.6f, 0.25f, 1f);
-            }
-        }
-
-        public static string TakeScreenshot()
-        {
-            DecorationItem di = GameManager.GetPlayerManagerComponent().GearItemBeingInspected().transform.GetComponentInChildren<DecorationItem>();
-            string s = "Couldn't get object name, took screenshot anyways";
-            string sanitizedName = "";
-            if (di)
-            {
-                sanitizedName = SanitizeObjectName(di.name);
-            }
-            string path = Directory.CreateDirectory(modsPath + modFolder + "Screenshots/").FullName;
-            if (sanitizedName == "")
-            {
-                sanitizedName = Il2Cpp.Utils.GetGuid();
-            }
-            if (SCPMain.catalogParsed.ContainsKey(sanitizedName) || (di.IconReference.RuntimeKeyIsValid() && di.IconReference.RuntimeKey.ToString() != catalogParsed[placeholderIconName]))
-            {
-                path += "!";
-                s = "Duplicate screenshot for " + sanitizedName;
-            }
-
-            path += sanitizedName;
-            path += ".png";
-
-            if (File.Exists(path))
-            {
-                s = "Overwritten screenshot for " + sanitizedName;
-            }
-            else
-            {
-                s = "Took screenshot for " + sanitizedName;
-            }
-
-            ScreenCapture.CaptureScreenshot(path);
-
-            MelonCoroutines.Start(DelayedHUDMessage(s, 0.5f));
-            return path;
-        }
-
-        public static void RelevantSetupForDecorationItem(DecorationItem di, bool weightOnly = false) // icons and weight
-        {
-            if (!di) return;
-        
-            float weight = 1f;
-            float baseWeight = 2f;
-            float volume = 1f;
-            string name = SanitizeObjectName(di.name);
-            bool change = true;
-
-            string logLine = "Calculated";
-
-            if (CarryableData.decorationOverrideData.ContainsKey(name) && CarryableData.decorationOverrideData[name].weight != 0f)
-            {
-                weight = CarryableData.decorationOverrideData[name].weight * Settings.options.globalWeightModifier;
-                logLine = "Preset";
-            }
-            else if (di.name.ToLower().StartsWith("obj_curtain"))
-            {
-                weight = 0.5f;
-            }
-            else if (autoWeightTable.ContainsKey(name))
-            {
-                weight = autoWeightTable[name];
-                logLine = "Precalculated";
-            }
-            else if (Settings.options.doWeightCalculation)
-            {
-                switch (di.tag)
-                {
-                    case "Wood":
-                        weight = baseWeight * 0.66f;
-                        break;
-                    case "Metal":
-                        weight = baseWeight * 2.0f;
-                        if (di.name.ToLower().Contains("barrel")) weight *= 0.5f;
-                        break;
-                    case "Rug":
-                        weight = baseWeight * 0.25f;
-                        break;
-                    case "Glass":
-                        weight = baseWeight * 0.5f;
-                        break;
-                    default:
-                        weight = baseWeight;
-                        break;
-                }
-                if (weight == baseWeight)
-                {
-                    if (di.name.ToLower().Contains("wood")) weight *= 0.66f;
-                    if (di.name.ToLower().Contains("metal")) weight *= 2.0f;
-                    if (di.name.ToLower().Contains("sack")) weight *= 0.25f;
-                    if (di.name.ToLower().Contains("computer")) weight *= 0.5f;
-                    if (di.name.ToLower().Contains("lamp")) weight *= 0.25f;
-                }
-                foreach (var mf in di.GetComponentsInChildren<MeshFilter>())
-                {
-                    volume += mf.sharedMesh.bounds.GetVolumeCubic();
-                }
-
-                weight = Mathf.Round(volume * weight * 100f / 25f) * 25f / 100f; //round to 0.25
-                weight = Mathf.Clamp(weight, 0.1f, 30f);
-                weight *= Settings.options.autoWeightMultiplier;
-                weight *= Settings.options.globalWeightModifier;
-
-                autoWeightTable.Add(name, weight);
-            }
-            else 
-            { 
-                change = false;
-                logLine = "No change";
-                weight = di.m_Weight.ToQuantity(1f);
-                volume = -1f;
-            }
-
-            if (logLine != "Precalculated") Log(CC.DarkGray, $"{logLine} for {name}: weight: {weight}, volume: {volume}");
-
-            if (change) di.m_Weight = ItemWeight.FromKilograms(weight); 
-
-            if (weightOnly) return;
-
-            if (catalogParsed.ContainsKey(name))
-            {
-                di.m_IconReference = new(catalogParsed[name]);
-                if (!di.m_IconReference.RuntimeKeyIsValid())
-                {
-                    Log(CC.Red, $"Inconsistent icon GUID for decoration: {name}. Reverting to placeholder");
-                    di.m_IconReference = new(catalogParsed[placeholderIconName]);
-                }
-            }
-            else
-            {
-                di.m_IconReference = new(catalogParsed[placeholderIconName]);
-                Log(CC.Magenta, $"Missing icon for decoration: {name}");
-            }
-        }
-
-        public static void SetLayersToInteractiveProp(DecorationItem di)
-        {
-            foreach (string name in CarryableData.skipLayerChange)
-            {
-                if (di.name.ToLower().StartsWith(name.ToLower())) return;
-            }
-
-            foreach (Collider c in di.GetComponentsInChildren<Collider>())
-            {
-                if (c.gameObject.layer == vp_Layer.Default || c.gameObject.layer == vp_Layer.TerrainObject)
-                {
-                    
-                    c.gameObject.layer = vp_Layer.InteractiveProp;
-                }
-            }
-            if (di.gameObject.layer == vp_Layer.Default || di.gameObject.layer == vp_Layer.TerrainObject)
-            {
-                di.gameObject.layer = vp_Layer.InteractiveProp;
-            }
-        }
-
-        public static void DisableNormalInteraction(DecorationItem di)
-        {
-            //di.enabled = true;
-
-            if (di.GetComponent<TraderRadio>())
-            {
-                di.GetComponent<TraderRadio>().enabled = false;
-                di.GetComponent<BlockPlacement>().m_BlockDecorationItemPlacement = false;
-            }
-
-            if (di.GetComponent<BreakDown>())
-            {
-                di.GetComponent<BreakDown>().m_AllowEditModePlacement = true;
-            }
-            if (di.name.ToLower().Contains("forge"))
-            {
-                di.gameObject.layer = vp_Layer.InteractiveProp;
-            }
-            if (di.GetComponent<WoodStove>())
-            {
-                di.GetComponent<WoodStove>().enabled = false;
-            }
-        }
-
-        public static void RestoreNormalInteraction(DecorationItem di)
-        {
-            //di.enabled = false;
-
-            if (di.GetComponent<TraderRadio>())
-            {
-                di.GetComponent<TraderRadio>().enabled = true;
-                //go.GetComponent<BlockPlacement>().m_BlockDecorationItemPlacement = true;
-            }
-            if (di.name.ToLower().Contains("forge"))
-            {
-                di.gameObject.layer = vp_Layer.TerrainObject;
-            }
-            if (di.GetComponent<WoodStove>())
-            {
-                di.GetComponent<WoodStove>().enabled = true;
-            }
-        }
-  
-
-        public static DecorationItem? MakeIntoDecoration(GameObject go, PlaceMeshRules rules = PlaceMeshRules.Default)
-        {
-            if (rules == PlaceMeshRules.Default) rules = genericPlacementRules;
-
-            if (go && !go.GetComponentInChildren<DecorationItem>())
-            {
-                string name = SanitizeObjectName(go.name);
-
-                LocalizedString ls = TryGetLocalizedName(go);
-                DecorationItem di = go.AddComponent<DecorationItem>();
-                SetLayersToInteractiveProp(di);
-
-                di.m_DecorationPrefab = new(name);
-                di.GetDecorationPrefab();
-                di.m_DisplayName = ls;//bd ? bd.m_LocalizedDisplayName : new LocalizedString() { m_LocalizationID = "NaN" };
-                di.GetCraftingDisplayName();
-                /*
-                if (name.ToLower().Contains("container"))
-                {
-                    di.m_PlacementRules = boxPlacementRules;
-                }
-                else
-                {
-                    di.m_PlacementRules = genericPlacementRules;
-                }
-                */
-                //di.m_IconReference = new("");
-
-                RelevantSetupForDecorationItem(di);
-                //MelonLogger.Msg(CC.Blue, $"Decoration item {di.name} created with icon {di.m_IconReference.RuntimeKey.ToString()}");
-
-                if (!GameManager.GetSafehouseManager().IsCustomizing()) RestoreNormalInteraction(di);
-
-                return di;
-            }
-
-            return go.GetComponentInChildren<DecorationItem>(); // can be null
         }
 
         public override void OnUpdate()
@@ -441,7 +104,6 @@ namespace SCPlus
                     { 
                         HUDMessage.AddMessage("This is not a decoration item...", false, true);
                     }
-                    
                 }
             }
 
@@ -468,6 +130,36 @@ namespace SCPlus
                     
                 }
             }
+
+
+
+            float moveSpeed = 10f; 
+            float turnSpeed = 5f; 
+
+            if (GetKeyHeld(KeyCode.W) || GetKeyHeld(KeyCode.S))
+            {
+                if (GameManager.GetPlayerManagerComponent()?.GetControlMode() == PlayerControlMode.InVehicle)
+                {
+                    var player = GameManager.GetPlayerTransform();
+                    if (player == null || car == null)
+                        return;
+
+                    Vector3 moveDir = (GetKeyHeld(KeyCode.W) ? player.forward : -player.forward);
+                    Vector3 delta = moveDir * moveSpeed * Time.deltaTime;
+
+                    // move both
+                    car.position += delta;
+                    player.position += delta;
+
+                    // rotate car gradually toward movement direction
+                    if (moveDir.sqrMagnitude > 0.0001f)
+                    {
+                        Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
+                        car.rotation = Quaternion.Slerp(car.rotation, targetRot, turnSpeed * Time.deltaTime);
+                    }
+                }
+            }
+         
             /*
             if (InputManager.GetKeyDown(InputManager.m_CurrentContext, KeyCode.Insert))
             {
@@ -570,9 +262,10 @@ namespace SCPlus
             {
                 if (GameManager.GetPlayerManagerComponent().IsInspectModeActive())
                 {
-                    TakeScreenshot();
+                    GreenScreen.TakeScreenshot();
                 }
             }
+
         }
     }
 }

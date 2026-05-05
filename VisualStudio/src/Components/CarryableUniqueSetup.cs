@@ -262,16 +262,35 @@ namespace SCPlus
             il.m_LightsourceLinks = new();
             il.m_MissionIllumination = null;
 
+
+            //var buttons = interaction.AddComponent<TwoButtonsChoiceUI>();
+            //buttons.m_HUD = InterfaceManager.GetPanel<Panel_HUD>();
+
             var si = interaction.AddComponent<SimpleInteraction>();
             si.AddEventCallback(InteractionEventType.PerformInteraction, (UnityAction<BaseInteraction>)(_ => il.PerformInteraction()));
+            if (Settings.options.infiniteFuel)
+            {
+                si.AddEventCallback(InteractionEventType.HideInteraction, (UnityAction<BaseInteraction>)(_ => il.HideInteraction()));
+                si.AddEventCallback(InteractionEventType.InitializeInteraction, (UnityAction<BaseInteraction>)(_ => il.InitializeInteraction()));
+
+            }
+            else
+            {
+                si.AddEventCallback(InteractionEventType.HideInteraction, (UnityAction<BaseInteraction>)(_ => DisplayInteractionButtons(false)));
+                si.AddEventCallback(InteractionEventType.InitializeInteraction, (UnityAction<BaseInteraction>)(_ => DisplayInteractionButtons(true, "GAMEPLAY_Light", "GAMEPLAY_Refuel")));
+            }
             si.m_DefaultHoverText.m_LocalizationID = "GAMEPLAY_WhiteoutListLantern";
-            si.InitializeInteraction();
+
+            //si.InitializeInteraction();
+
+            if (Settings.options.infiniteFuel) return go;
 
             var ft = interaction.AddComponent<SCPlusSimpleFuelTank>();
-            ft.Init(SCPlusSimpleFuelTank.fuelTankUser.tunnelLantern, 1);
+            ft.Init(SCPlusSimpleFuelTank.fuelTankUser.tunnelLantern, 24);
 
             return go;
         }
+
 
         public static GameObject ReconstructTraderRadio()
         {

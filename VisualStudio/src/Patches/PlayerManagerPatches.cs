@@ -12,6 +12,7 @@ namespace SCPlus
         private static class ManagePlacement
         {
             public static Vector3 offset = Vector3.zero;
+            public static HashSet<Collider> disabledCollidersForPlacement = [];
 
             internal static bool Prefix(PlayerManager __instance, ref GameObject objectToPlace, ref bool __result)
             {
@@ -25,7 +26,7 @@ namespace SCPlus
                     {
                         if (objectToPlace.name.ToLower().Contains(entry.Key.ToLower()))
                         {
-                            di = SCPMain.MakeIntoDecoration(objectToPlace, entry.Value.placeRules);
+                            di = MakeIntoDecoration(objectToPlace, entry.Value.placeRules);
                         }
                     }
                 }
@@ -65,7 +66,7 @@ namespace SCPlus
                         return false;
                     }
 
-                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight && !SCPMain.decorationJustDuped;
+                    bool shouldCalculateWeight = di.gameObject.scene.name != "DontDestroyOnLoad" && !Settings.options.ignorePlaceWeight && !decorationJustDuped;
                     bool isFromInventory = di.gameObject.scene.name == "DontDestroyOnLoad" || GameManager.GetInventoryComponent().m_DecorationItems.Contains(di);
 
                     Container[] c = objectToPlace.GetComponentsInChildren<Container>();
@@ -80,7 +81,7 @@ namespace SCPlus
                                 CarryableData.carriedObjectWeight += cc.GetTotalWeightKG().ToQuantity(1f);
                             }
 
-                            if (SCPMain.decorationJustDuped || isFromInventory)
+                            if (decorationJustDuped || isFromInventory)
                             {
                                 cc.MakeEmpty();
                             }
@@ -122,7 +123,7 @@ namespace SCPlus
 
                     if (carryable != null)
                     {
-                        if (SCPMain.decorationJustDuped)
+                        if (decorationJustDuped)
                         {
                             carryable.isInstance = true;
                         }
@@ -153,8 +154,33 @@ namespace SCPlus
                             offset = od.placementOffset;
                         }
                     }
+
+                    var colliders = di.GetComponentsInChildren<Collider>();
+
+                    if (colliders != null && colliders.Length > 1)
+                    {
+                        Collider mainCollider = null;
+
+                        foreach (var anyCol in colliders)
+                        {
+                            if (anyCol != null && anyCol.enabled == true)
+                            {
+                                disabledCollidersForPlacement.Add(anyCol);
+                                anyCol.enabled = false;
+
+                                if (mainCollider == null || anyCol.bounds.GetVolumeCubic() > mainCollider.bounds.GetVolumeCubic())
+                                {
+                                    mainCollider = anyCol;
+                                }
+                            }
+                        }
+
+                        mainCollider.enabled = true;
+                        Log(CC.Gray, "Disabled " + (colliders.Length - 1) + " colliders for placement, main collider: " + mainCollider.name);
+                    }
                 }
 
+                DisplayShiftButton(true);
                 return true;
             }
         }
@@ -219,11 +245,16 @@ namespace SCPlus
             internal static void Prefix(ref PlayerManager __instance)
             {
                 di = __instance.m_ObjectToPlaceDecorationItem;
+                foreach (var c in ManagePlacement.disabledCollidersForPlacement)
+                {
+                    if (c) c.enabled = true;
+                }
+                ManagePlacement.disabledCollidersForPlacement.Clear();
                 //ManagePlacement.offset = Vector3.zero;
             }
             internal static void Postfix()
             {
-                SCPMain.decorationJustDuped = false;
+                decorationJustDuped = false;
 
                 if (di?.isActiveAndEnabled == true)
                 {
@@ -240,6 +271,8 @@ namespace SCPlus
                     di.TryGetComponent(out SCPlusCarryable carryable);
                     if (carryable) CarryableManager.Add(carryable);
                 }
+
+                DisplayShiftButton(false);
             }
         }
     }

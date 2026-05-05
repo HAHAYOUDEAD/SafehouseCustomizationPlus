@@ -1,0 +1,186 @@
+[
+  {
+    "filters": [ "LargeCabinet", "LargeDresser" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 180.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 12
+      },
+      {
+        "item": "Tinder",
+        "num": 1
+      }
+    ]
+  },
+  {
+    "filters": [ "DresserTall" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 150.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 10
+      },
+      {
+        "item": "Tinder",
+        "num": 1
+      }
+    ]
+  },
+  {
+    "filters": [ "FishingCabinDresser" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 90.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 8
+      },
+      {
+        "item": "Tinder",
+        "num": 1
+      }
+    ]
+  },
+  {
+    "filters": [ "SmallCabinet", "EndTable", "FishingCabinCupboard" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 60.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 4
+      }
+    ]
+  },
+  {
+    "filters": [ "GasOven", "Fridge!MiniFridge" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 240.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 10
+      }
+    ]
+  },
+  {
+    "filters": [ "MetalLockerA", "MetalFileCabinet", "StoreNewspaperStand" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 120.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 4
+      }
+    ]
+  },
+  {
+    "filters": [ "MetalLockerB", "StoreShelf" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 180.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 8
+      }
+    ]
+  },
+  {
+    "filters": [ "MetalLockerC", "MetalDesk" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 240.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 12
+      }
+    ]
+  },
+  {
+    "filters": [ "MiniFridge" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 90.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 2
+      }
+    ]
+  },
+  {
+    "filters": [ "MedicineShelf", "MetalBox", "MailBox", "FirstAidKit", "CashRegister" ],
+    "sound": "MetalSaw",
+    "minutesToHarvest": 30.0,
+    "requireTool": true,
+    "tools": [ "hacksaw" ],
+    "yield": [
+      {
+        "item": "ScrapMetal",
+        "num": 2
+      }
+    ]
+  },
+  {
+    "filters": [ "KingBed" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 180.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 8
+      },
+      {
+        "item": "Tinder",
+        "num": 4
+      },
+      {
+        "item": "Cloth",
+        "num": 10
+      }
+    ]
+  },
+  {
+    "filters": [ "BedMattress" ],
+    "sound": "WoodReclaimed",
+    "minutesToHarvest": 60.0,
+    "requireTool": true,
+    "tools": [ "hatchet", "hammer" ],
+    "yield": [
+      {
+        "item": "ReclaimedWoodB",
+        "num": 4
+      },
+      {
+        "item": "Tinder",
+        "num": 1
+      },
+      {
+        "item": "Cloth",
+        "num": 3
+      }
+    ]
+  }
+]

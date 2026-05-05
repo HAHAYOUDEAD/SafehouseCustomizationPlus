@@ -1,4 +1,6 @@
-﻿namespace SCPlus
+﻿using Il2Cpp;
+
+namespace SCPlus
 {
 
     internal class BreakDownPatches
@@ -83,32 +85,61 @@
                 return true;
             }
         }
-
+        
         [HarmonyPatch(typeof(BreakDown), nameof(BreakDown.Awake))]
-        private static class EnableBreakdown
+        public static class HandleBreakdown
         {
-            internal static void Prefix(ref BreakDown __instance)
+            public static HashSet<(BreakDown bd, BreakDownDefinition def)> toLoad = [];
+            public static HashSet<string> missing = [];
+
+            internal static void Postfix(BreakDown __instance)
             {
-                if (!__instance.isActiveAndEnabled)
+                //if (!SCPMain.isLoaded) return;
+                //if (__instance.gameObject?.activeInHierarchy != true) return;
+                if (IsMainMenu(__instance.gameObject.scene.name)) return;
+
+                if (__instance.gameObject.layer == vp_Layer.Corpse) return;
+
+                if (__instance.m_YieldObject != null && __instance.m_YieldObject.Length > 0)
                 {
-                    if (__instance.m_YieldObject != null && __instance.m_YieldObject.Length > 0)
+                    __instance.m_EditModeDestroyOnly = false;
+                }
+                else if (BreakDownHelper.TryGetDefinitionForBreakDown(__instance.name, out var def))
+                {
+                    __instance.m_EditModeDestroyOnly = false;
+                    //BreakDownHelper.LoadBreakDownFromDefinition(ref __instance, def); // hangs the game because of LoadGearItemPrefab, so we save it to handle later
+                    toLoad.Add((__instance, def));
+                }
+                else
+                {
+                    string sanitizedName = SanitizeObjectName(__instance.name);
+                    if (!missing.Contains(sanitizedName))
                     {
-                        __instance.enabled = true;
-                    }
-                    else
-                    {
-                        Log(CC.Gray, $"BreakDown exists but doesn't have yields: {__instance.name}");
+                        missing.Add(sanitizedName);
                     }
                 }
-            }
-            internal static void Postfix(ref BreakDown __instance)
-            {
+
                 if (__instance.gameObject.layer == vp_Layer.Default)
                 {
                     __instance.gameObject.layer = vp_Layer.InteractiveProp;
                 }
+                
+                if (__instance.GetComponentInChildren<ObjectAnim>() || 
+                    __instance.GetComponentInChildren<Container>() || 
+                    __instance.GetComponentInChildren<Bed>()
+                    )
+                    __instance.enabled = false;
+                
+            }
+        }
+
+        [HarmonyPatch(typeof(QualitySettingsManager), nameof(QualitySettingsManager.ApplyCurrentQualitySettings))] // consistent?
+        public static class LoadBreakDownDefinitions
+        {
+            internal static void Postfix()
+            {
+
             }
         }
     }
-
 }

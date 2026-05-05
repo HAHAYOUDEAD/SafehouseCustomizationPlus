@@ -1,4 +1,6 @@
-﻿namespace SCPlus
+﻿using UnityEngine.Playables;
+
+namespace SCPlus
 {
 
     internal class DecorationPatches
@@ -46,24 +48,21 @@
 
                 if (!__instance.m_AllowInInventory)
                 {
-                    if (__instance.name.StartsWith("CORPSE") && !Settings.options.allowMoveCorpses)
-                    {
-                        __instance.m_AllowInInventory = false;
-                        bd.m_AllowEditModePlacement = false;
-                        goto skip;
-                    }
-
                     __instance.m_AllowInInventory = true;
 
-                    SCPMain.RelevantSetupForDecorationItem(__instance, true);
+                    RelevantSetupForDecorationItem(__instance, true);
 
                     if (bd)
                     {
-                        bd.m_AllowEditModePlacement = true;
+                        bd.m_AllowEditModePlacement = ShouldAllowPlacement(__instance.gameObject);
                     }
                 }
-            skip:
-                SCPMain.SetLayersToInteractiveProp(__instance);
+                else
+                {
+                    AdjustDecorationWeight(__instance);
+                }
+
+                SetLayersToInteractiveProp(__instance);
 
 
                 /*
@@ -134,25 +133,91 @@
                     coroutines[id] = MelonCoroutines.Start(DisableOutline(__instance));
                 }
             }
-        }
 
-        public static IEnumerator DisableOutline(DecorationItem di)
-        {
-            yield return new WaitForSeconds(1.5f);
-
-            while (di.GetInstanceID() == GetDecorationIDUnderCrosshair())
+            private static IEnumerator DisableOutline(DecorationItem di)
             {
-                if (!di || !GameManager.GetSafehouseManager().IsCustomizing()) yield break;
+                /*
+                var rr = di.GetRenderers();
+                var mpb = new MaterialPropertyBlock();
+                var sm = GameManager.GetSafehouseManager();
+                bool found = false;
+                var cFrom = outlineColor.HueAdjust(Settings.options.outlineHue).AlphaAdjust(Settings.options.outlineAlpha);
+                var cTo = cFrom.AlphaAdjust(0f);
+                var hold = sm.m_OnHoverPropertyBlock.GetColor("_Color");
 
+                foreach (var r in rr)
+                {
+                    if (r.HasPropertyBlock())
+                    {
+                        r.GetPropertyBlock(mpb);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    mpb = sm.m_OnHoverPropertyBlock;
+                }
+
+                float t = 0f;
+
+                while (t < 2f)
+                {
+                    if (!di || !GameManager.GetSafehouseManager().IsCustomizing()) goto bop;
+
+                    if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem == di) goto bop;
+
+                    if (di.GetInstanceID() == GetDecorationIDUnderCrosshair())
+                    {
+                        t = 0f;
+                        yield return null;
+                        continue;
+                    }
+
+                    t += Time.deltaTime;
+
+                    
+                    var c = Color.Lerp(cFrom, cTo, t / 2f);
+                    mpb.SetColor("_Color", c);
+
+                    MelonLogger.Msg($"--raw t: {t:F2} | di: {di.name} | crosshair: {GetDecorationIDUnderCrosshair()} | color: {c}");
+
+                    ResetPropertyBlockOnRenderers(rr);
+                    ApplyPropertyBlockToRenderers(rr, mpb); // not applied, probably overriden on update somewhere 🤡
+
+                    yield return null;
+                }
+
+                ResetPropertyBlockOnRenderers(rr);
+
+            bop:
+                if (!found)
+                {
+                    sm.m_OnHoverPropertyBlock.SetColor("_Color", hold);
+                }
+                coroutines.Remove(di.GetInstanceID());
+                */
+                
                 yield return new WaitForSeconds(1.5f);
+
+                while (di.GetInstanceID() == GetDecorationIDUnderCrosshair())
+                {
+                    if (!di || !GameManager.GetSafehouseManager().IsCustomizing()) yield break;
+
+                    yield return new WaitForSeconds(1.5f);
+                }
+
+                if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem != di) ResetPropertyBlockOnRenderers(di.GetRenderers());
+                
+                coroutines.Remove(di.GetInstanceID());
+                
+
+                yield break;
             }
-
-            if (GameManager.GetPlayerManagerComponent().m_ObjectToPlaceDecorationItem != di) ResetPropertyBlockOnRenderers(di.GetRenderers());
-
-            TimedOutline.coroutines.Remove(di.GetInstanceID());
-
-            yield break;
         }
+
+
 
         public static int GetDecorationIDUnderCrosshair()
         {
@@ -164,7 +229,7 @@
             */
             Ray ray = GameManager.GetMainCamera().ScreenPointToRay(Input.mousePosition);
 
-            if (Physics.Raycast(ray, out RaycastHit hit, 3f, (int)Utility.LayerMask.PossibleDecoration))
+            if (Physics.Raycast(ray, out RaycastHit hit, 3f, (int)DecoLayerMask.PossibleDecoration))
             {
                 DecorationItem di = hit.collider.GetComponentInParent<DecorationItem>();
                 if (di)
@@ -187,7 +252,7 @@
                     return true;
                 }
 
-                SCPMain.DisableNormalInteraction(__instance);
+                DisableNormalInteraction(__instance);
 
                 int s = 0;
                 foreach (Renderer r in __instance.GetRenderers())
@@ -243,7 +308,7 @@
                 {
                     return;
                 }
-                SCPMain.RestoreNormalInteraction(__instance);
+                RestoreNormalInteraction(__instance);
             }
         }
 
@@ -261,7 +326,7 @@
                     return false;
                 }
 
-                WoodStove ws = __instance.GetComponentInChildren<WoodStove>();
+                var ws = __instance.GetComponentInChildren<WoodStove>();
                 if (ws && ws.Fire.IsBurning())
                 {
                     GameAudioManager.PlayGUIError();
@@ -282,8 +347,20 @@
 
                 if (__instance.IconReference == null || !__instance.IconReference.RuntimeKeyIsValid())
                 {
-                    SCPMain.RelevantSetupForDecorationItem(__instance);
+                    RelevantSetupForDecorationItem(__instance);
                 }
+                else
+                {
+                    AdjustDecorationWeight(__instance);
+                }
+
+                var ft = __instance.GetComponentInChildren<SCPlusSimpleFuelTank>();
+                if (ft)
+                {
+                    ft.TurnOff();
+                }
+
+                if (RollChance(1f)) GameManager.GetPlayerVoiceComponent().Play("Play_InspectCrafting", Il2CppVoice.Priority.Critical); // hehe
                 return true;
             }
         }
@@ -317,26 +394,15 @@
 
                 if (di.IconReference == null || !di.IconReference.RuntimeKeyIsValid()) // icon not set
                 {
-                    SCPMain.RelevantSetupForDecorationItem(di);
+                    RelevantSetupForDecorationItem(di);
                 }
-            }
-        }
-
-
-        [HarmonyPatch(typeof(Container), nameof(Container.Deserialize))]
-        private static class InitialSetupForDecorationsInContainer
-        {
-            internal static void Postfix(ref Container __instance)
-            {
-                foreach (DecorationItem di in __instance.m_DecorationItems)
+                else
                 {
-                    if (di.IconReference == null || !di.IconReference.RuntimeKeyIsValid()) // icon not set
-                    {
-                        SCPMain.RelevantSetupForDecorationItem(di);
-                    }
+                    AdjustDecorationWeight(di);
                 }
             }
         }
+
 
 
         [HarmonyPatch(typeof(Placeable), nameof(Placeable.Awake))]
@@ -364,7 +430,7 @@
                     return;
                 }
 
-                if (WithinDistance(__instance.transform.position, Vector3.zero))
+                if (IsWithinDistance(__instance.transform.position, Vector3.zero))
                 {
                     //Log(CC.Red, "Placeable: Can't generate guid - coords are 0 " + __instance.m_Guid + " " + __instance.name);
                     return;
@@ -374,7 +440,7 @@
 
                 //__instance.transform.parent = PlaceableManager.FindOrCreateCategoryRoot().transform;
                 //PlaceableManager.Add(__instance);
-                Guid newGuid = GenerateSeededGuid(SeedFromCoords(__instance.transform.position));
+                Guid newGuid = GenerateGuid(SeedFromCoords(__instance.transform.position));
                 //og.m_RuntimeCachedPdid = GenerateSeededGuid(SeedFromCoords(__instance.transform.position)).ToString();
                 //og.MaybeRuntimeRegister();
 

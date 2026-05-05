@@ -59,7 +59,7 @@
                         {
                             for (int i = 0; i < allDataInScene.Count; i++)
                             {
-                                if (proxy.name == allDataInScene[i].name && WithinDistance(proxy.originalPos, allDataInScene[i].originalPos))
+                                if (proxy.name == allDataInScene[i].name && IsWithinDistance(proxy.originalPos, allDataInScene[i].originalPos))
                                 {
                                     if ((allDataInScene[i].state & CS.Removed) != 0)
                                     {
