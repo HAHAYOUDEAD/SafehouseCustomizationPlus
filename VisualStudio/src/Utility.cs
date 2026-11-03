@@ -40,7 +40,7 @@ namespace SCPlus
 {
     internal static class Utility
     {
-        public const string modVersion = "1.9.6";
+        public const string modVersion = "1.9.8";
         public const string modName = "SafehouseCustomizationPlus";
         public const string modAuthor = "Waltz";
 
@@ -91,6 +91,13 @@ namespace SCPlus
         public static bool IsMainMenu(string scene)
         {
             return !string.IsNullOrEmpty(scene) && scene.Contains("MainMenu");
+        }
+
+        public static GearItem? LoadGearItemPrefab(string name)
+        {
+            GameObject go = AssetHelper.SafeLoadAssetAsync<GameObject>(name).WaitForCompletion();
+            if (go == null) go = Resources.Load<GameObject>(name);
+            return go == null ? null : go.GetComponent<GearItem>();
         }
 
         public static GameObject GetInteractiveGameObjectUnderCrosshair()

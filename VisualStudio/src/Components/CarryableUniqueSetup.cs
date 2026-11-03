@@ -232,7 +232,7 @@ namespace SCPlus
             l.shadowBias = 0.01f;
             l.shadows = LightShadows.Hard;
 
-            GameObject particleDonor = UnityEngine.Object.Instantiate(GearItem.LoadGearItemPrefab("GEAR_KeroseneLampB").gameObject);
+            GameObject particleDonor = UnityEngine.Object.Instantiate(Utility.LoadGearItemPrefab("GEAR_KeroseneLampB").gameObject);
             GameObject p = particleDonor.transform.Find("FX/LampFlame").gameObject;
             p.transform.parent.gameObject.active = true;
             p.transform.parent = lightRoot.transform;

@@ -444,7 +444,7 @@ namespace SCPlus
                 //og.m_RuntimeCachedPdid = GenerateSeededGuid(SeedFromCoords(__instance.transform.position)).ToString();
                 //og.MaybeRuntimeRegister();
 
-                Log(PdidTable.GetGameObject(og.m_Guid) ? CC.Green : CC.Gray, $"name {__instance.name} | PDID {og.m_RuntimeCachedPdid} | seed {SeedFromCoords(__instance.transform.position)} | coords {__instance.transform.position.ToString("F4")}");
+                Log(PdidTable.GetGameObject(og.PDID) ? CC.Green : CC.Gray, $"name {__instance.name} | PDID {og.m_RuntimeCachedPdid} | seed {SeedFromCoords(__instance.transform.position)} | coords {__instance.transform.position.ToString("F4")}");
                 PdidTable.RuntimeAddOrReplace(og, newGuid.ToString());
                 //PdidTable.s_RuntimeGameObjectByPdid[og.m_RuntimeCachedPdid] = og;
 

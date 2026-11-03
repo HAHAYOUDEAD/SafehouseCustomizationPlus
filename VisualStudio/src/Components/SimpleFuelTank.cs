@@ -46,7 +46,7 @@ namespace SCPlus
 
         private void SetupTunnelLantern()
         {
-            this.fuel.m_LiquidType = LiquidType.m_Kerosene;
+            this.fuel.m_LiquidType = LiquidType.GetKerosene();
             this.fuel.m_LiquidCapacity = new(500000000); // 0.5 liters
             this.fuel.m_Liquid = this.empty ? new(0) : this.fuel.m_LiquidCapacity;
             this.fuel.m_AmountPerUseVolume = new(8250000 / burnTimeHours); // 8250000 ~ 60 ingame minutes

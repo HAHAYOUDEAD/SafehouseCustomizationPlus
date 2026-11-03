@@ -68,7 +68,7 @@
       <EmbeddedResource Include="Resources\nothingtoseehere" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Waltz.Modding.TLD.Il2CppAssemblies.Windows" Version="2.52.0" />
+      <PackageReference Include="MonsieurMeh.Modding.TLD.Il2CppAssemblies.Windows" Version="2.58.0" />
     </ItemGroup>
     <ItemGroup>
       <Reference Include="DynamicTemperature">

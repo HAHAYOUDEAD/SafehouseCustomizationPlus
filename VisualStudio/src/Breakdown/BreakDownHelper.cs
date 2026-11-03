@@ -94,7 +94,7 @@ namespace SCPlus
 
                         if (!cachedPrefabs.TryGetValue(name, out yieldItem) || yieldItem == null)
                         {
-                            yieldItem = GearItem.LoadGearItemPrefab(name)?.gameObject;
+                            yieldItem = Utility.LoadGearItemPrefab(name)?.gameObject;
                         }
 
                         if (yieldItem != null)
@@ -186,7 +186,7 @@ namespace SCPlus
 
                     if (!cachedPrefabs.TryGetValue(name, out selectedTool) || selectedTool == null)
                     {
-                        selectedTool = GearItem.LoadGearItemPrefab(name)?.gameObject;
+                        selectedTool = Utility.LoadGearItemPrefab(name)?.gameObject;
                     }
 
                     if (selectedTool != null)

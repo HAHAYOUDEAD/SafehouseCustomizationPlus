@@ -116,7 +116,7 @@ namespace SCPlus
             if (fire)
             {
                 og = fire.GetOrAddComponent<ObjectGuid>();
-                var s = og.m_Guid;
+                var s = og.PDID;
                 
                 return true;
             }

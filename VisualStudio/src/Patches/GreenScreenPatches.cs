@@ -14,7 +14,7 @@
 
                 if (di) // setting up greenscreen
                 {
-                    GearItem gi = GearItem.Instantiate(GearItem.LoadGearItemPrefab("GEAR_Stone"));
+                    GearItem gi = GearItem.Instantiate(Utility.LoadGearItemPrefab("GEAR_Stone"));
                     foreach (Renderer r in gi.m_MeshRenderers)
                     {
                         r.enabled = false;

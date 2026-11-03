@@ -239,31 +239,30 @@ namespace SCPlus
 
             foreach (var og in FindInPlayableScenes<ObjectGuid>(true).Where(c => c?.GetComponent<DecorationItem>() != null))
             {
-                if (og && !string.IsNullOrEmpty(og.GetPDID()))
+                if (og && og.gameObject.activeInHierarchy && !string.IsNullOrEmpty(og.GetPDID()))
                 {
                     GameObject dis = og.gameObject;
-                    GameObject dat = UnityEngine.Object.Instantiate(dis, dis.transform.parent);
-                    dis.SetActive(false);
-                    dat.name = dis.name;
 
                     List<string> guidTransfer = [];
 
-                    foreach (var oldOg in dis.GetComponentsInChildren<ObjectGuid>())
+                    foreach (var oldOg in dis.GetComponentsInChildren<ObjectGuid>(true))
                     {
                         guidTransfer.Add(oldOg.GetPDID());
                     }
 
+                    dis.SetActive(false);
+                    GameObject dat = UnityEngine.Object.Instantiate(dis, dis.transform.parent);
+                    dat.name = dis.name;
+
                     int i = 0;
-                    foreach (var newOg in dat.GetComponentsInChildren<ObjectGuid>())
+                    foreach (var newOg in dat.GetComponentsInChildren<ObjectGuid>(true))
                     {
-                        var newGuid = GenerateGuid(guidTransfer[i] + uniqueSceneName);
-                        newOg.m_RuntimeCachedPdid = newGuid.ToString();
-                        newOg.MaybeRuntimeRegister();
+                        PdidTable.RuntimeAddOrReplace(newOg, GenerateGuid(guidTransfer[i] + uniqueSceneName).ToString());
 
                         i++;
                     }
 
-                    //dat.SetActive(true);
+                    dat.SetActive(true);
 
                     PdidTable.RuntimeUnregister(og, true);
                     forDeletion.Add(dis);
